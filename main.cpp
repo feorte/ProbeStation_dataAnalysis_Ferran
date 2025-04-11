@@ -102,8 +102,5 @@ int main()
         cout << "No se pudo abrir el archivo." << endl;
     }    
 
-
-
-
     return 0;
 } 
