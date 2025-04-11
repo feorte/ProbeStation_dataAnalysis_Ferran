@@ -94,6 +94,7 @@ int main()
             tree->Fill();
         }
         tree->Scan("voltage:error_capacitance_series");
+        tree->Show(0);
     }
  
 
