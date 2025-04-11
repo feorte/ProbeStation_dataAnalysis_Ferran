@@ -86,11 +86,14 @@ int main()
      
         // read the tabular data
         // the data is separated by tabs, so we can use >> to read it
-        while (data >> voltage >> channel >> capacitance_series >> error_capacitance_series >> total_current >> active_voltage >> time >> temperature >> humidity >> capacitance_parallel >> error_capacitance_parallel >> impedance >> impedance_error >> phase >> phase_error >> capacitance_series_uncorrelated >> capacitance_parellel_uncorrelated) {
+        while (data >> voltage >> channel >> capacitance_series >> error_capacitance_series >> total_current >> active_voltage 
+            >> time >> temperature >> humidity >> capacitance_parallel >> error_capacitance_parallel >> impedance >> impedance_error 
+            >> phase >> phase_error >> capacitance_series_uncorrelated >> capacitance_parellel_uncorrelated) {
             
             // Now write the header
             tree->Fill();
         }
+        tree->Scan("voltage:error_capacitance_series");
     }
  
 
