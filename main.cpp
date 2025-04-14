@@ -37,32 +37,32 @@ int main()
         int channel;
         tree->Branch("channel", &channel);
 
-        float capacitance_series;
-        tree->Branch("capacitance_series", &capacitance_series);
+        float cs;
+        tree->Branch("cs", &cs);
 
-        float error_capacitance_series;
-        tree->Branch("error_capacitance_series", &error_capacitance_series);
+        float cs_error;
+        tree->Branch("cs_error", &cs_error);
         
-        float total_current;
-        tree->Branch("total_current", &total_current);
+        float tot_curr;
+        tree->Branch("tot_curr", &tot_curr);
 
-        float active_voltage;
-        tree->Branch("active_voltage", &active_voltage);
+        float act_vlt;
+        tree->Branch("act_vlt", &act_vlt);
 
         float time;
         tree->Branch("time", &time);
 
-        float temperature;
-        tree->Branch("temperature", &temperature);
+        float temp;
+        tree->Branch("temp", &temp);
 
-        float humidity;
-        tree->Branch("humidity", &humidity);
+        float hum;
+        tree->Branch("hum", &hum);
 
-        float capacitance_parallel;
-        tree->Branch("capacitance_parallel", &capacitance_parallel);
+        float cp;
+        tree->Branch("cp", &cp);
 
-        float error_capacitance_parallel;
-        tree->Branch("error_capacitance_parallel", &error_capacitance_parallel);
+        float cp_error;
+        tree->Branch("cp_error", &cp_error);
 
         float impedance;
         tree->Branch("impedance", &impedance);
@@ -76,25 +76,28 @@ int main()
         float phase_error;
         tree->Branch("phase_error", &phase_error);
 
-        float capacitance_series_uncorrelated;
-        tree->Branch("capacitance_series_uncorrelated", &capacitance_series_uncorrelated);
+        float cs_uncorr;
+        tree->Branch("cs_uncorr", &cs_uncorr); //uncorrected
 
-        float capacitance_parellel_uncorrelated;
-        tree->Branch("capacitance_parellel_uncorrelated", &capacitance_parellel_uncorrelated);
+        float cp_uncorr;
+        tree->Branch("cp_uncorr", &cp_uncorr);
+
+
 
         
      
         // read the tabular data
         // the data is separated by tabs, so we can use >> to read it
-        while (data >> voltage >> channel >> capacitance_series >> error_capacitance_series >> total_current >> active_voltage 
-            >> time >> temperature >> humidity >> capacitance_parallel >> error_capacitance_parallel >> impedance >> impedance_error 
-            >> phase >> phase_error >> capacitance_series_uncorrelated >> capacitance_parellel_uncorrelated) {
+        while (data >> voltage >> channel >> cs >> cs_error >> tot_curr >> act_vlt 
+            >> time >> temp >> hum >> cp >> cp_error >> impedance >> impedance_error 
+            >> phase >> phase_error >> cs_uncorr >> cp_uncorr) {
             
             // Now write the header
             tree->Fill();
         }
-        tree->Scan("voltage:error_capacitance_series");
+        tree->Scan("voltage:cs_error");
         tree->Show(0);
+        tree->Write();
     }
  
 
