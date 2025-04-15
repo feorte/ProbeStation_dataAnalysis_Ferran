@@ -83,20 +83,6 @@ int main()
 
         float cp_uncorr;
         tree->Branch("cp_uncorr", &cp_uncorr);
-        
-     
-        // read the tabular data
-        // the data is separated by tabs, so we can use >> to read it
-        while (data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
-            >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
-            >> phase >> phase_err >> cs_uncorr >> cp_uncorr) {
-            
-            // Now write the header
-            tree->Fill();
-        }
-        tree->Scan("voltage:cs_err");
-        tree->Show(0);
-        tree->Write();
 
 
         // create the tree for analysis
@@ -174,41 +160,75 @@ int main()
 
         while (true){
 
-            for (int i=0; i<n_ch; i++) { // information for each channel on the given voltage 
-                data >> voltage >> channel >> cs_anl[i] >> cs_err_anl[i] >> tot_curr_anl[i] >> act_vlt_anl[i]
-                >> time_anl[i] >> temp_anl[i] >> hum_anl[i] >> cp_anl[i] >> cp_err_anl[i]
-                >> impedance_anl[i] >> impedance_err_anl[i] >> phase_anl[i] >> phase_err_anl[i]
-                >> cs_uncorr_anl[i] >> cp_uncorr_anl[i] >> dummy; // we dont use the channel variable
+            for (int i=0; i<n_ch; i++) { 
+                // read the tabular data
+                // the data is separated by tabs, so we can use >> to read it
+                data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
+                >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
+                >> phase >> phase_err >> cs_uncorr >> cp_uncorr;
+
+                tree->Fill();
+
+                cs_anl[i] = cs;
+                cs_err_anl[i] = cs_err;
+                tot_curr_anl[i] = tot_curr;
+                act_vlt_anl[i] = act_vlt; 
+                time_anl[i] = time;
+                temp_anl[i] = temp;
+                hum_anl[i] = hum;
+                cp_anl[i] = cp;
+                cp_err_anl[i] = cp_err;
+                impedance_anl[i] = impedance;
+                impedance_err_anl[i] = impedance_err;
+                phase_anl[i] = phase;
+                phase_err_anl[i] = phase_err;
+                cs_uncorr_anl[i] = cs_uncorr;
+                cp_uncorr_anl[i] = cp_uncorr;
             }
 
-            tree_analy->Fill();
-
-
-        }
-
-
-
-        while (data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
-            >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
-            >> phase >> phase_err >> cs_uncorr >> cp_uncorr) {
+            // calculate the mean and standard deviation for temperature and humidity
+            mean_temp = 0;
+            mean_hum = 0;
+            std_temp = 0;
+            std_hum = 0;
+            for (int i=0; i<n_ch; i++) {
+                mean_temp += temp_anl[i];
+                mean_hum += hum_anl[i];
+            }
+            mean_temp /= n_ch;
+            mean_hum /= n_ch;
+            for (int i=0; i<n_ch; i++) {
+                std_temp += (temp_anl[i] - mean_temp) * (temp_anl[i] - mean_temp);
+                std_hum += (hum_anl[i] - mean_hum) * (hum_anl[i] - mean_hum);
+            }
+            std_temp = sqrt(std_temp / n_ch);
+            std_hum = sqrt(std_hum / n_ch);
             
-            // Now write the header
-            tree_analy->Fill();
+            tree_anl->Fill();
+
+            // stop reading if we reach the end of the file
+            if (data.eof()) break;
+            if (!data) {
+                // Optional: handle error (e.g. I/O error)
+                break;
+            }
+
         }
-        tree_analy->Scan("voltage:cs_err");
-        tree_analy->Show(0);
-        tree_analy->Write();
+        
+        tree_anl->Scan();
 
-
-
-
-
+        tree->Write();
+        tree_anl->Write();
+        myFile->Close();
+        data.close();
+        std::cout << "Storing file created successfully." << std::endl;
     }
  
 
     else {
         cout << "No se pudo abrir el archivo." << endl;
     }    
+
 
     return 0;
 } 
