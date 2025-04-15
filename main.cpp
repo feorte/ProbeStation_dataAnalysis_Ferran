@@ -42,8 +42,8 @@ int main()
         float cs;
         tree->Branch("cs", &cs);
 
-        float cs_error;
-        tree->Branch("cs_error", &cs_error);
+        float cs_err;
+        tree->Branch("cs_err", &cs_err);
         
         float tot_curr;
         tree->Branch("tot_curr", &tot_curr);
@@ -63,20 +63,20 @@ int main()
         float cp;
         tree->Branch("cp", &cp);
 
-        float cp_error;
-        tree->Branch("cp_error", &cp_error);
+        float cp_err;
+        tree->Branch("cp_err", &cp_err);
 
         float impedance;
         tree->Branch("impedance", &impedance);
 
-        float impedance_error;
-        tree->Branch("impedance_error", &impedance_error);
+        float impedance_err;
+        tree->Branch("impedance_err", &impedance_err);
 
         float phase;
         tree->Branch("phase", &phase);
 
-        float phase_error;
-        tree->Branch("phase_error", &phase_error);
+        float phase_err;
+        tree->Branch("phase_err", &phase_err);
 
         float cs_uncorr;
         tree->Branch("cs_uncorr", &cs_uncorr); //uncorrected
@@ -87,20 +87,20 @@ int main()
      
         // read the tabular data
         // the data is separated by tabs, so we can use >> to read it
-        while (data >> voltage >> channel >> cs >> cs_error >> tot_curr >> act_vlt 
-            >> time >> temp >> hum >> cp >> cp_error >> impedance >> impedance_error 
-            >> phase >> phase_error >> cs_uncorr >> cp_uncorr) {
+        while (data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
+            >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
+            >> phase >> phase_err >> cs_uncorr >> cp_uncorr) {
             
             // Now write the header
             tree->Fill();
         }
-        tree->Scan("voltage:cs_error");
+        tree->Scan("voltage:cs_err");
         tree->Show(0);
         tree->Write();
 
 
         // create the tree for analysis
-        auto tree_analy = std::make_unique<TTree>("tree_analysis", "Tree analysis");
+        auto tree_anl = std::make_unique<TTree>("tree_analysis", "Tree analysis");
 
         int n_ch = 8; // number of channels
 
@@ -108,76 +108,94 @@ int main()
         std::vector <int> used_ch = {1,48,57,65,120,193,241,256};
 
         // define the branches;
-        tree->Branch("voltage", &voltage);
+        tree_anl->Branch("voltage", &voltage);
 
-        std::vector <float> cs_anl
-        tree->Branch("cs", &cs);
+        std::vector<float> cs_anl(n_ch);
+        tree_anl->Branch("cs", &cs_anl);
 
-        float cs_error;
-        tree->Branch("cs_error", &cs_error);
-        
-        float tot_curr;
-        tree->Branch("tot_curr", &tot_curr);
+        std::vector<float> cs_err_anl(n_ch);
+        tree_anl->Branch("cs_err", &cs_err_anl);
 
-        float act_vlt;
-        tree->Branch("act_vlt", &act_vlt);
+        std::vector<float> tot_curr_anl(n_ch);
+        tree_anl->Branch("tot_curr", &tot_curr_anl);
 
-        float time;
-        tree->Branch("time", &time);
+        std::vector<float> act_vlt_anl(n_ch);
+        tree_anl->Branch("act_vlt", &act_vlt_anl);
 
-        float temp;
-        tree->Branch("temp", &temp);
+        std::vector<float> time_anl(n_ch);
+        tree_anl->Branch("time", &time_anl);
 
-        float hum;
-        tree->Branch("hum", &hum);
+        std::vector<float> temp_anl(n_ch);
+        tree_anl->Branch("temp", &temp_anl);
 
-        float cp;
-        tree->Branch("cp", &cp);
+        std::vector<float> hum_anl(n_ch);
+        tree_anl->Branch("hum", &hum_anl);
 
-        float cp_error;
-        tree->Branch("cp_error", &cp_error);
+        std::vector<float> cp_anl(n_ch);
+        tree_anl->Branch("cp", &cp_anl);
 
-        float impedance;
-        tree->Branch("impedance", &impedance);
+        std::vector<float> cp_err_anl(n_ch);
+        tree_anl->Branch("cp_err", &cp_err_anl);
 
-        float impedance_error;
-        tree->Branch("impedance_error", &impedance_error);
+        std::vector<float> impedance_anl(n_ch);
+        tree_anl->Branch("impedance", &impedance_anl);
 
-        float phase;
-        tree->Branch("phase", &phase);
+        std::vector<float> impedance_err_anl(n_ch);
+        tree_anl->Branch("impedance_err", &impedance_err_anl);
 
-        float phase_error;
-        tree->Branch("phase_error", &phase_error);
+        std::vector<float> phase_anl(n_ch);
+        tree_anl->Branch("phase", &phase_anl);
 
-        float cs_uncorr;
-        tree->Branch("cs_uncorr", &cs_uncorr); //uncorrected
+        std::vector<float> phase_err_anl(n_ch);
+        tree_anl->Branch("phase_err", &phase_err_anl);
 
-        float cp_uncorr;
-        tree->Branch("cp_uncorr", &cp_uncorr);
+        std::vector<float> cs_uncorr_anl(n_ch);
+        tree_anl->Branch("cs_uncorr", &cs_uncorr_anl); // uncorrected
+
+        std::vector<float> cp_uncorr_anl(n_ch);
+        tree_anl->Branch("cp_uncorr", &cp_uncorr_anl);
+
+        // mean values for the temperature and humidity in one voltage
+        float mean_temp;
+        tree_anl->Branch("mean_temp", &mean_temp);
+
+        float mean_hum;
+        tree_anl->Branch("mean_hum", &mean_hum);
+
+        //standard deviation for the temperature and humidity in one voltage
+        float std_temp;
+        tree_anl->Branch("std_temp", &std_temp);
+
+        float std_hum;
+        tree_anl->Branch("std_hum", &std_hum);
+
 
         float dummy; // to jump over columns we don't want to store 
 
         while (true){
-            data >> voltage >> dummy;
 
-            for (int i=0; i<n_ch; i++) {
-                cs >> cs_error >> tot_curr >> act_vlt 
-                >> time >> temp >> hum >> cp >> cp_error >> impedance >> impedance_error 
-                >> phase >> phase_error >> cs_uncorr >> cp_uncorr
+            for (int i=0; i<n_ch; i++) { // information for each channel on the given voltage 
+                data >> voltage >> channel >> cs_anl[i] >> cs_err_anl[i] >> tot_curr_anl[i] >> act_vlt_anl[i]
+                >> time_anl[i] >> temp_anl[i] >> hum_anl[i] >> cp_anl[i] >> cp_err_anl[i]
+                >> impedance_anl[i] >> impedance_err_anl[i] >> phase_anl[i] >> phase_err_anl[i]
+                >> cs_uncorr_anl[i] >> cp_uncorr_anl[i] >> dummy; // we dont use the channel variable
             }
+
+            tree_analy->Fill();
+
 
         }
 
 
 
-        while (data >> voltage >> channel >> cs >> cs_error >> tot_curr >> act_vlt 
-            >> time >> temp >> hum >> cp >> cp_error >> impedance >> impedance_error 
-            >> phase >> phase_error >> cs_uncorr >> cp_uncorr) {
+        while (data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
+            >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
+            >> phase >> phase_err >> cs_uncorr >> cp_uncorr) {
             
             // Now write the header
             tree_analy->Fill();
         }
-        tree_analy->Scan("voltage:cs_error");
+        tree_analy->Scan("voltage:cs_err");
         tree_analy->Show(0);
         tree_analy->Write();
 
