@@ -23,70 +23,70 @@ int main()
         //     std::cout << line << endl;
         // }
 
-        // create the storing file and a tree
+        // create the storing file and a tree to store the data
         std::unique_ptr<TFile> myFile( TFile::Open("file.root", "RECREATE") );
-        auto tree = std::make_unique<TTree>("tree", "The Tree Title");
+        auto raw_measurements = std::make_unique<TTree>("raw_measurements", "Raw measurements");
 
         // add branches 
 
         //// use the following if you want to take the title of the branch from the file as the variable x (char *)
         // char *x="VOLTAGE";
-        // tree->Branch(Form("%s",x), &volt);
+        // raw_measurements->Branch(Form("%s",x), &volt);
         
         float voltage;
-        tree->Branch("voltage", &voltage);
+        raw_measurements->Branch("voltage", &voltage);
 
         int channel;
-        tree->Branch("channel", &channel);
+        raw_measurements->Branch("channel", &channel);
 
         float cs;
-        tree->Branch("cs", &cs);
+        raw_measurements->Branch("cs", &cs);
 
         float cs_err;
-        tree->Branch("cs_err", &cs_err);
+        raw_measurements->Branch("cs_err", &cs_err);
         
         float tot_curr;
-        tree->Branch("tot_curr", &tot_curr);
+        raw_measurements->Branch("tot_curr", &tot_curr);
 
         float act_vlt;
-        tree->Branch("act_vlt", &act_vlt);
+        raw_measurements->Branch("act_vlt", &act_vlt);
 
         float time;
-        tree->Branch("time", &time);
+        raw_measurements->Branch("time", &time);
 
         float temp;
-        tree->Branch("temp", &temp);
+        raw_measurements->Branch("temp", &temp);
 
         float hum;
-        tree->Branch("hum", &hum);
+        raw_measurements->Branch("hum", &hum);
 
         float cp;
-        tree->Branch("cp", &cp);
+        raw_measurements->Branch("cp", &cp);
 
         float cp_err;
-        tree->Branch("cp_err", &cp_err);
+        raw_measurements->Branch("cp_err", &cp_err);
 
         float impedance;
-        tree->Branch("impedance", &impedance);
+        raw_measurements->Branch("impedance", &impedance);
 
         float impedance_err;
-        tree->Branch("impedance_err", &impedance_err);
+        raw_measurements->Branch("impedance_err", &impedance_err);
 
         float phase;
-        tree->Branch("phase", &phase);
+        raw_measurements->Branch("phase", &phase);
 
         float phase_err;
-        tree->Branch("phase_err", &phase_err);
+        raw_measurements->Branch("phase_err", &phase_err);
 
         float cs_uncorr;
-        tree->Branch("cs_uncorr", &cs_uncorr); //uncorrected
+        raw_measurements->Branch("cs_uncorr", &cs_uncorr); //uncorrected
 
         float cp_uncorr;
-        tree->Branch("cp_uncorr", &cp_uncorr);
+        raw_measurements->Branch("cp_uncorr", &cp_uncorr);
 
 
-        // create the tree for analysis
-        auto tree_anl = std::make_unique<TTree>("tree_analysis", "Tree analysis");
+        // create the tree for the analysis
+        auto analysis = std::make_unique<TTree>("analysis", "Analysis");
 
         int n_ch = 8; // number of channels
 
@@ -94,66 +94,66 @@ int main()
         std::vector <int> used_ch = {1,48,57,65,120,193,241,256};
 
         // define the branches;
-        tree_anl->Branch("voltage", &voltage);
+        analysis->Branch("voltage", &voltage);
 
         std::vector<float> cs_anl(n_ch);
-        tree_anl->Branch("cs", &cs_anl);
+        analysis->Branch("cs", &cs_anl);
 
         std::vector<float> cs_err_anl(n_ch);
-        tree_anl->Branch("cs_err", &cs_err_anl);
+        analysis->Branch("cs_err", &cs_err_anl);
 
         std::vector<float> tot_curr_anl(n_ch);
-        tree_anl->Branch("tot_curr", &tot_curr_anl);
+        analysis->Branch("tot_curr", &tot_curr_anl);
 
         std::vector<float> act_vlt_anl(n_ch);
-        tree_anl->Branch("act_vlt", &act_vlt_anl);
+        analysis->Branch("act_vlt", &act_vlt_anl);
 
         std::vector<float> time_anl(n_ch);
-        tree_anl->Branch("time", &time_anl);
+        analysis->Branch("time", &time_anl);
 
         std::vector<float> temp_anl(n_ch);
-        tree_anl->Branch("temp", &temp_anl);
+        analysis->Branch("temp", &temp_anl);
 
         std::vector<float> hum_anl(n_ch);
-        tree_anl->Branch("hum", &hum_anl);
+        analysis->Branch("hum", &hum_anl);
 
         std::vector<float> cp_anl(n_ch);
-        tree_anl->Branch("cp", &cp_anl);
+        analysis->Branch("cp", &cp_anl);
 
         std::vector<float> cp_err_anl(n_ch);
-        tree_anl->Branch("cp_err", &cp_err_anl);
+        analysis->Branch("cp_err", &cp_err_anl);
 
         std::vector<float> impedance_anl(n_ch);
-        tree_anl->Branch("impedance", &impedance_anl);
+        analysis->Branch("impedance", &impedance_anl);
 
         std::vector<float> impedance_err_anl(n_ch);
-        tree_anl->Branch("impedance_err", &impedance_err_anl);
+        analysis->Branch("impedance_err", &impedance_err_anl);
 
         std::vector<float> phase_anl(n_ch);
-        tree_anl->Branch("phase", &phase_anl);
+        analysis->Branch("phase", &phase_anl);
 
         std::vector<float> phase_err_anl(n_ch);
-        tree_anl->Branch("phase_err", &phase_err_anl);
+        analysis->Branch("phase_err", &phase_err_anl);
 
         std::vector<float> cs_uncorr_anl(n_ch);
-        tree_anl->Branch("cs_uncorr", &cs_uncorr_anl); // uncorrected
+        analysis->Branch("cs_uncorr", &cs_uncorr_anl); // uncorrected
 
         std::vector<float> cp_uncorr_anl(n_ch);
-        tree_anl->Branch("cp_uncorr", &cp_uncorr_anl);
+        analysis->Branch("cp_uncorr", &cp_uncorr_anl);
 
         // mean values for the temperature and humidity in one voltage
         float mean_temp;
-        tree_anl->Branch("mean_temp", &mean_temp);
+        analysis->Branch("mean_temp", &mean_temp);
 
         float mean_hum;
-        tree_anl->Branch("mean_hum", &mean_hum);
+        analysis->Branch("mean_hum", &mean_hum);
 
         //standard deviation for the temperature and humidity in one voltage
         float std_temp;
-        tree_anl->Branch("std_temp", &std_temp);
+        analysis->Branch("std_temp", &std_temp);
 
         float std_hum;
-        tree_anl->Branch("std_hum", &std_hum);
+        analysis->Branch("std_hum", &std_hum);
 
 
         float dummy; // to jump over columns we don't want to store 
@@ -171,7 +171,7 @@ int main()
                   break;
               }
 
-                tree->Fill();
+                raw_measurements->Fill();
 
                 cs_anl[i] = cs;
                 cs_err_anl[i] = cs_err;
@@ -210,7 +210,7 @@ int main()
             std_temp = sqrt(std_temp / n_ch);
             std_hum = sqrt(std_hum / n_ch);
             
-            tree_anl->Fill();
+            analysis->Fill();
 
             // stop reading if we reach the end of the file
             if (data.eof()) break;
@@ -221,10 +221,10 @@ int main()
 
         }
         
-        tree_anl->Scan();
+        analysis->Scan();
 
-        tree->Write();
-        tree_anl->Write();
+        raw_measurements->Write();
+        analysis->Write();
         // myFile->Close();
         // data.close();
         std::cout << "Storing file created successfully." << std::endl;
