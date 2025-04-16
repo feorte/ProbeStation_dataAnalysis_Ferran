@@ -159,13 +159,17 @@ int main()
         float dummy; // to jump over columns we don't want to store 
 
         while (true){
+            bool success = true;
 
             for (int i=0; i<n_ch; i++) { 
                 // read the tabular data
                 // the data is separated by tabs, so we can use >> to read it
-                data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
-                >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
-                >> phase >> phase_err >> cs_uncorr >> cp_uncorr;
+                if (!(data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
+                    >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
+                    >> phase >> phase_err >> cs_uncorr >> cp_uncorr)) {
+                  success = false;
+                  break;
+              }
 
                 tree->Fill();
 
@@ -185,6 +189,8 @@ int main()
                 cs_uncorr_anl[i] = cs_uncorr;
                 cp_uncorr_anl[i] = cp_uncorr;
             }
+
+            if (!success) break;
 
             // calculate the mean and standard deviation for temperature and humidity
             mean_temp = 0;
@@ -219,14 +225,14 @@ int main()
 
         tree->Write();
         tree_anl->Write();
-        myFile->Close();
-        data.close();
+        // myFile->Close();
+        // data.close();
         std::cout << "Storing file created successfully." << std::endl;
     }
  
 
     else {
-        cout << "No se pudo abrir el archivo." << endl;
+        cout << "File could not be opened" << endl;
     }    
 
 
