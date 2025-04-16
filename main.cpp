@@ -24,7 +24,7 @@ int main()
         // }
 
         // create the storing file and a tree to store the data
-        std::unique_ptr<TFile> myFile( TFile::Open("file.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("stored_data.root", "RECREATE") );
         auto raw_measurements = std::make_unique<TTree>("raw_measurements", "Raw measurements");
 
         // add branches 
