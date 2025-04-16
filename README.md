@@ -1,3 +1,4 @@
 # ProbeStation_dataAnalysis
-root codes to analyze the data from the probe station
-testing new branch / testing clone in personal laptop / changing user mail of pc / change username pc / edit in vs code
+C++ code that creates root files to store the data from the measurements on the prove stations.
+It creates to root trees, one to store the raw date and another one that prepares the data to analyze it later.
+To run simply write `root main.cpp` on a terminal with `ROOT`.
