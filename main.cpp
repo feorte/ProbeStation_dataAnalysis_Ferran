@@ -96,6 +96,8 @@ int main()
         // define the branches;
         analysis->Branch("voltage", &voltage);
 
+        analysis->Branch("channel", &used_ch);
+
         std::vector<float> cs_anl(n_ch);
         analysis->Branch("cs", &cs_anl);
 
@@ -171,6 +173,7 @@ int main()
                   break;
               }
 
+                // Fill measurements into the tree
                 raw_measurements->Fill();
 
                 cs_anl[i] = cs;
@@ -209,7 +212,8 @@ int main()
             }
             std_temp = sqrt(std_temp / n_ch);
             std_hum = sqrt(std_hum / n_ch);
-            
+
+            // fill the analysis tree
             analysis->Fill();
 
             // stop reading if we reach the end of the file
@@ -221,7 +225,7 @@ int main()
 
         }
         
-        analysis->Scan();
+        //analysis->Scan();
 
         raw_measurements->Write();
         analysis->Write();
