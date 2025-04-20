@@ -1,11 +1,11 @@
 #include <iostream>
-#include <TROOT.h>
+#include "TROOT.h"
 #include <fstream>
 #include <string>
 #include <vector> 
 
 
-int main()
+int read_store()
 {
     // read the data
     std::ifstream data ("CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"); // open the file directly when initializing the stream object
