@@ -71,21 +71,21 @@ int analyse_data()
     g->GetXaxis()->CenterTitle();
     g->GetYaxis()->CenterTitle();
 
-    // same graph but in log scale (necessary to get depletion voltage)
-    // reate new vectors to hold the log-transformed data and the propagated errors:
-    std::vector<double> x_log(dim), y_log(dim);
-    std::vector<double> xerr_log(dim), yerr_log(dim);
+    // create same graph but in log scale (necessary to get depletion voltage)
+    // first create new vectors to hold the log-transformed data and the propagated errors:
+    std::vector<float> x_log(dim), y_log(dim);
+    std::vector<float> xerr_log(dim), yerr_log(dim);
 
     for (int i = 0; i < dim; ++i) {
         x_log[i] = std::log(x[i]);
         y_log[i] = std::log(y[i]);
 
         // Error propagation formula for log(x): simga_log(x) = sigma_x / x
-        xerr_log[i] = xerr[i] / x[i];
+        //xerr_log[i] = xerr[i] / x[i]; // still, al 0s
         yerr_log[i] = yerr[i] / y[i];
     }
 
-    TGraphErrors* glog = new TGraphErrors(dim, x_log.data(), y_log.data(), xerr_log.data(), yerr_log.data());   
+    TGraphErrors* glog = new TGraphErrors(dim, x_log.data(), y_log.data(), &xerr[0], yerr_log.data());   
     glog->SetName(Form("Channel %d log scale", ch));
     glog->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
     glog->SetMarkerStyle(20);
