@@ -68,14 +68,14 @@ int analyse_data()
     TString title = Form("Channel %d;Voltage [V]; Capacitance [pF]", ch);
     g->SetTitle(title);
     g->SetMarkerStyle(20);
-    g->SetMarkerSize(1);
+    g->SetMarkerSize(0.75);
     g->SetMarkerColor(kBlue);
-    g->SetLineColor(kBlue);
-    g->SetLineWidth(2);
-    g->SetLineStyle(1);
-    g->SetFillColor(kBlue);
-    g->SetFillStyle(3001);
-    g->SetFillColorAlpha(kBlue, 0.1);
+    //g->SetLineColor(kBlue);
+    //g->SetLineWidth(2);
+    //g->SetLineStyle(1);
+    //g->SetFillColor(kBlue);
+    //g->SetFillStyle(3001);
+    //g->SetFillColorAlpha(kBlue, 0.1);
  
     g->Draw();
     g->GetXaxis()->CenterTitle();
@@ -83,9 +83,8 @@ int analyse_data()
 
 
     // Save the graphs
-    g->SaveAs("CV_graph.png");
+    //g->SaveAs("CV_graph.png");
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
-    //TString graph_name = Form("Channel %d", ch);
     g->Write();
 
 
