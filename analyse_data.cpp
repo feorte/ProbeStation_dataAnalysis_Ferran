@@ -49,12 +49,17 @@ int analyse_data()
         dim=iEntry+1;
 
     }
-
+    // which channel to plot
+    int ch = channel->at(0); 
     printf("Channel: %d\n", channel->at(0));
-
+    
+    // Create a TGraph object and fill it with the data
     TGraph *g = new TGraph(dim, &x[0], &y[0]);
-    g->Draw("AL");
-
+    TString title = Form("Channel %d;X-Axis;Y-Axis", ch);
+    g->SetTitle(title);
+    g->Draw();
+    g->GetXaxis()->CenterTitle();
+    g->GetYaxis()->CenterTitle();
 
 
     return 0;
