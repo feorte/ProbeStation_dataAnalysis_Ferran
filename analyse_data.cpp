@@ -62,5 +62,14 @@ int analyse_data()
     g->GetYaxis()->CenterTitle();
 
 
+    // Save the graphs
+    g->SaveAs("CV_graph.png");
+
+    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+    TString graph_name = Form("Channel %d", ch);
+    g->Write(graph_name);
+
+
+
     return 0;
 }
