@@ -95,6 +95,19 @@ int analyse_data()
     glog->GetXaxis()->CenterTitle();
     glog->GetYaxis()->CenterTitle();
 
+    // fit the graph in log scale to get the depletion voltage
+    glog->Fit("pol1", "", "", x_log[0], x_log[3]); // fit a line to the data
+    //TF1* fit = glog->GetFunction("pol1");
+
+
+
+
+
+
+
+
+
+
     // Save the graphs
     //g->SaveAs("CV_graph.png");
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
