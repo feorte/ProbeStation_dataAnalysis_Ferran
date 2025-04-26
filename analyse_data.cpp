@@ -98,6 +98,7 @@ int analyse_data()
     // fit the graph in log scale to get the depletion voltage
     glog->Fit("pol1", "0", "", x_log[0], x_log[3]); // fit a line to the data
     TF1* fit = glog->GetFunction("pol1");
+    fit->SetRange(0,5);
     fit->Draw("SAME"); // draw the fit on the graph
 
     
