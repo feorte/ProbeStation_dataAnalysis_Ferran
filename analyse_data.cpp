@@ -99,23 +99,18 @@ int analyse_data()
     glog->Fit("pol1", "0", "", x_log[0], x_log[3]); // fit a line to the data
     TF1* fit = glog->GetFunction("pol1");
     fit->SetRange(0,5);
+
+    // draw the fit on the graph
+    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
+    glog->Draw();
     fit->Draw("SAME"); // draw the fit on the graph
-
-    
-
-
-
-
-
-
-
-
 
     // Save the graphs
     //g->SaveAs("CV_graph.png");
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
     g->Write();
-    glog->Write();
+    c1->Write(); // log scale graph and fit in the same canvas
+    glog->Write(); // justs log scale graph
 
 
 
