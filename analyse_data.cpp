@@ -91,19 +91,47 @@ int analyse_data()
     glog->SetMarkerStyle(20);
     glog->SetMarkerSize(0.75);
     glog->SetMarkerColor(kBlue);
+    // create a canvas to write everithing together
+    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
     glog->Draw();
     glog->GetXaxis()->CenterTitle();
     glog->GetYaxis()->CenterTitle();
 
-    // fit the graph in log scale to get the depletion voltage
-    glog->Fit("pol1", "0", "", x_log[0], x_log[3]); // fit a line to the data
-    TF1* fit = glog->GetFunction("pol1");
-    fit->SetRange(0,5);
+    // fit two lines on the graph to get the depletion voltage
+    // First fit: left region (rising region)
+    glog->Fit("pol1", "0", "", x_log[0], x_log[4]); 
+    TF1* lfit = glog->GetFunction("pol1");
+    lfit->Draw("SAME"); 
 
-    // draw the fit on the graph
-    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
-    glog->Draw();
-    fit->Draw("SAME"); // draw the fit on the graph
+    // Second fit: rigt region (plateau region)
+    TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]); // Define second fit
+    glog->Fit(rfit, "R0"); // R = restrict to function range, 0 = no auto draw
+    rfit->SetRange(3.5,5.5);
+    rfit->Draw("SAME");
+
+    //----------------------------------------
+    // Extract parameters
+    double p0_1 = lfit->GetParameter(0); // Intercept of first fit
+    double p1_1 = lfit->GetParameter(1); // Slope of first fit
+
+    double p0_2 = rfit->GetParameter(0); // Intercept of second fit
+    double p1_2 = rfit->GetParameter(1); // Slope of second fit
+
+    //----------------------------------------
+    // Find intersection (depletion voltage V_dep)
+    // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
+    double V_dep = (p0_2 - p0_1) / (p1_1 - p1_2);
+
+    // Print it
+    std::cout << "Depletion voltage V_dep = " << V_dep << std::endl;
+
+    //----------------------------------------
+    // Draw a vertical line at V_dep
+    TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
+    line->SetLineColor(kGreen+2);
+    line->SetLineStyle(2); // dashed
+    line->SetLineWidth(2);
+    line->Draw("SAME");
 
     // Save the graphs
     //g->SaveAs("CV_graph.png");
