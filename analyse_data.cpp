@@ -91,7 +91,8 @@ int analyse_data()
     glog->SetMarkerStyle(20);
     glog->SetMarkerSize(0.75);
     glog->SetMarkerColor(kBlue);
-    // create a canvas to write everithing together
+
+    // create a canvas to put everything together
     TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
     glog->Draw();
     glog->GetXaxis()->CenterTitle();
@@ -100,7 +101,8 @@ int analyse_data()
     // fit two lines on the graph to get the depletion voltage
     // First fit: left region (rising region)
     glog->Fit("pol1", "0", "", x_log[0], x_log[4]); 
-    TF1* lfit = glog->GetFunction("pol1");
+    TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit"); // <--- CLONE HERE
+    lfit->SetRange(0,5);
     lfit->Draw("SAME"); 
 
     // Second fit: rigt region (plateau region)
@@ -116,6 +118,7 @@ int analyse_data()
 
     double p0_2 = rfit->GetParameter(0); // Intercept of second fit
     double p1_2 = rfit->GetParameter(1); // Slope of second fit
+
 
     //----------------------------------------
     // Find intersection (depletion voltage V_dep)
