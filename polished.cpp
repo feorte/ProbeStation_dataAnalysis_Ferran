@@ -160,10 +160,10 @@ int polished()
     legend->Draw("SAME");
 
     // Optional: Add text
-    TLatex latex;
-    latex.SetTextFont(42);
-    latex.SetTextSize(0.035);
-    latex.DrawLatexNDC(0.18, 0.92, Form("Channel %d: Depletion voltage analysis", ch));
+    // TLatex latex;
+    // latex.SetTextFont(42);
+    // latex.SetTextSize(0.035);
+    // latex.DrawLatexNDC(0.18, 0.92, Form("Channel %d: Depletion voltage analysis", ch));
 
     // Save everything
     //c1->SaveAs("CV_graphs.pdf"); // good quality
