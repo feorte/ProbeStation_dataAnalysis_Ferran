@@ -43,7 +43,7 @@ int analyse_data()
     //----------------------------------------------------------------------------------
 
     // which channel to analyse
-    int indx = 1; // index of the channel to study (0 = first channel, 8 channels in total)
+    int indx = 0; // index of the channel to study (0 = first channel, 8 channels in total)
 
     //----------------------------------------------------------------------------------
 
@@ -276,7 +276,7 @@ int analyse_data()
 
     // Save the graphs
     //g->SaveAs("CV_graph.png");
-    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs_1.root", "RECREATE") );
     g->Write();
     c1->Write(); // log scale graph and fit in the same canvas
     glog->Write(); // justs log scale graph
