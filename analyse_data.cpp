@@ -40,6 +40,13 @@ int analyse_data()
     std::vector<float> y;
     std::vector<float> yerr;
 
+    //----------------------------------------------------------------------------------
+
+    // which channel to analyse
+    int indx = 1; // index of the channel to study (0 = first channel, 8 channels in total)
+
+    //----------------------------------------------------------------------------------
+
     int dim; //number of different voltages tested
 
     for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
@@ -48,15 +55,16 @@ int analyse_data()
 
         // fill vaiables for the CV graph
         x.push_back(voltage);
-        y.push_back(cs->at(0));
-        yerr.push_back(cs_err->at(0));
+        y.push_back(cs->at(indx));
+        yerr.push_back(cs_err->at(indx));
 
         dim=iEntry+1;
     }
 
-    // which channel to plot
-    int ch = channel->at(0); 
-    printf("Channel: %d\n", channel->at(0));
+    // which channel to analyse
+    int ch = channel->at(indx); 
+    printf("Channel: %d\n", ch);
+
     
     // create a TGraphErrors object and fill it with the data
     std::vector<float> xerr(dim, 0); // no error on x-axis
@@ -160,7 +168,7 @@ int analyse_data()
     glog->GetYaxis()->CenterTitle();
 
     // First fit: left region
-    glog->Fit("pol1", "0", "", x_log[0], x_log[4]);
+    glog->Fit("pol1", "0", "", x_log[1], x_log[6]);
     TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
     lfit->SetLineColor(kRed);
     lfit->SetLineWidth(2);
@@ -169,7 +177,7 @@ int analyse_data()
     lfit->Draw("SAME");
 
     // Second fit: right region
-    TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]);
+    TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
     glog->Fit(rfit, "R0");
     rfit->SetLineColor(kGreen+3);
     rfit->SetLineWidth(2);
@@ -181,10 +189,13 @@ int analyse_data()
     double p0_1 = lfit->GetParameter(0);
     double p1_1 = lfit->GetParameter(1);
     double p0_2 = rfit->GetParameter(0);
-    double p1_2 = rfit->GetParameter(1);
+    // double p1_2 = rfit->GetParameter(1);
+    double p1_2 = 0; // fit to a constaqnt, so slope is 0
 
-    double V_dep = (p0_2 - p0_1) / (p1_1 - p1_2);
-    std::cout << "Depletion voltage V_dep = " << V_dep << std::endl;
+    // intersection point (depletion voltage V_dep)
+    // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
+    double V_dep = std::exp((p0_2 - p0_1) / (p1_1 - p1_2));
+    std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
     // Draw depletion voltage line
     TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
@@ -200,7 +211,7 @@ int analyse_data()
     legend->AddEntry(glog, "Data (ln C vs ln V)", "p");
     legend->AddEntry(lfit, "Rising fit", "l");
     legend->AddEntry(rfit, "Plateau fit", "l");
-    legend->AddEntry(line, Form("V_{dep} = %.2f", V_dep), "l");
+    legend->AddEntry(line, Form("V_{dep} = %.2f V", V_dep), "l");
     legend->Draw("SAME");
 
     // Optional: Add text
