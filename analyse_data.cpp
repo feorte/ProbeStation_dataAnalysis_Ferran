@@ -91,49 +91,123 @@ int analyse_data()
     glog->SetMarkerSize(0.75);
     glog->SetMarkerColor(kBlue);
 
-    // create a canvas to put everything together
-    TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
-    glog->Draw();
+    // // create a canvas to put everything together
+    // TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
+    // glog->Draw();
+    // glog->GetXaxis()->CenterTitle();
+    // glog->GetYaxis()->CenterTitle();
+
+    // // fit two lines on the graph to get the depletion voltage
+    // // First fit: left region (rising region)
+    // glog->Fit("pol1", "0", "", x_log[0], x_log[4]); 
+    // TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit"); // <--- CLONE HERE
+    // lfit->SetRange(0,5);
+    // lfit->Draw("SAME"); 
+
+    // // Second fit: rigt region (plateau region)
+    // TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]); // Define second fit
+    // glog->Fit(rfit, "R0"); // R = restrict to function range, 0 = no auto draw
+    // rfit->SetRange(3.5,5.5);
+    // rfit->Draw("SAME");
+
+    // //----------------------------------------
+    // // Extract parameters
+    // double p0_1 = lfit->GetParameter(0); // Intercept of first fit
+    // double p1_1 = lfit->GetParameter(1); // Slope of first fit
+
+    // double p0_2 = rfit->GetParameter(0); // Intercept of second fit
+    // double p1_2 = rfit->GetParameter(1); // Slope of second fit
+
+
+    // //----------------------------------------
+    // // Find intersection (depletion voltage V_dep)
+    // // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
+    // double V_dep = (p0_2 - p0_1) / (p1_1 - p1_2);
+
+    // // Print it
+    // std::cout << "Depletion voltage V_dep = " << V_dep << std::endl;
+
+    // //----------------------------------------
+    // // Draw a vertical line at V_dep
+    // TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
+    // line->SetLineColor(kGreen+2);
+    // line->SetLineStyle(2); // dashed
+    // line->SetLineWidth(2);
+    // line->Draw("SAME");
+
+    // Create canvas
+    TCanvas* c1 = new TCanvas("c1", "CV Analysis", 800, 600);
+    c1->SetGrid();
+    c1->SetTicks();
+    c1->SetLeftMargin(0.15);
+    c1->SetBottomMargin(0.15);
+
+    // Draw graph
+    glog->SetMarkerStyle(20);
+    glog->SetMarkerSize(0.8);
+    glog->SetMarkerColor(kBlue+2);
+    glog->GetXaxis()->SetTitleFont(42);
+    glog->GetYaxis()->SetTitleFont(42);
+    glog->GetXaxis()->SetLabelFont(42);
+    glog->GetYaxis()->SetLabelFont(42);
+    glog->GetXaxis()->SetTitleSize(0.05);
+    glog->GetYaxis()->SetTitleSize(0.05);
+    glog->GetXaxis()->SetTitleOffset(1.2);
+    glog->GetYaxis()->SetTitleOffset(1.4);
+    glog->Draw("AP"); // Important: "AP" to redraw axis properly
+
     glog->GetXaxis()->CenterTitle();
     glog->GetYaxis()->CenterTitle();
 
-    // fit two lines on the graph to get the depletion voltage
-    // First fit: left region (rising region)
-    glog->Fit("pol1", "0", "", x_log[0], x_log[4]); 
-    TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit"); // <--- CLONE HERE
+    // First fit: left region
+    glog->Fit("pol1", "0", "", x_log[0], x_log[4]);
+    TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
+    lfit->SetLineColor(kRed);
+    lfit->SetLineWidth(2);
+    lfit->SetLineStyle(2); // dashed
     lfit->SetRange(0,5);
-    lfit->Draw("SAME"); 
+    lfit->Draw("SAME");
 
-    // Second fit: rigt region (plateau region)
-    TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]); // Define second fit
-    glog->Fit(rfit, "R0"); // R = restrict to function range, 0 = no auto draw
+    // Second fit: right region
+    TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]);
+    glog->Fit(rfit, "R0");
+    rfit->SetLineColor(kGreen+3);
+    rfit->SetLineWidth(2);
+    rfit->SetLineStyle(7); // dotted
     rfit->SetRange(3.5,5.5);
     rfit->Draw("SAME");
 
-    //----------------------------------------
-    // Extract parameters
-    double p0_1 = lfit->GetParameter(0); // Intercept of first fit
-    double p1_1 = lfit->GetParameter(1); // Slope of first fit
+    // Calculate intersection
+    double p0_1 = lfit->GetParameter(0);
+    double p1_1 = lfit->GetParameter(1);
+    double p0_2 = rfit->GetParameter(0);
+    double p1_2 = rfit->GetParameter(1);
 
-    double p0_2 = rfit->GetParameter(0); // Intercept of second fit
-    double p1_2 = rfit->GetParameter(1); // Slope of second fit
-
-
-    //----------------------------------------
-    // Find intersection (depletion voltage V_dep)
-    // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
     double V_dep = (p0_2 - p0_1) / (p1_1 - p1_2);
-
-    // Print it
     std::cout << "Depletion voltage V_dep = " << V_dep << std::endl;
 
-    //----------------------------------------
-    // Draw a vertical line at V_dep
+    // Draw depletion voltage line
     TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
-    line->SetLineColor(kGreen+2);
-    line->SetLineStyle(2); // dashed
+    line->SetLineColor(kMagenta+2);
+    line->SetLineStyle(9); // long dashed
     line->SetLineWidth(2);
     line->Draw("SAME");
+
+    // Add legend
+    TLegend* legend = new TLegend(0.18, 0.18, 0.5, 0.31);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->AddEntry(glog, "Data (ln C vs ln V)", "p");
+    legend->AddEntry(lfit, "Rising fit", "l");
+    legend->AddEntry(rfit, "Plateau fit", "l");
+    legend->AddEntry(line, Form("V_{dep} = %.2f", V_dep), "l");
+    legend->Draw("SAME");
+
+    // Optional: Add text
+    // TLatex latex;
+    // latex.SetTextFont(42);
+    // latex.SetTextSize(0.035);
+    // latex.DrawLatexNDC(0.18, 0.92, Form("Channel %d: Depletion voltage analysis", ch));
 
     // //--------Donnor density----------
 
