@@ -36,9 +36,9 @@ int analyse_data()
     tree->SetBranchAddress("cs_err", &cs_err);
     
     // define variables for the CV graph
-    std::vector<float> x;
-    std::vector<float> y;
-    std::vector<float> yerr;
+    std::vector<float> x ;
+    std::vector<float> y ;
+    std::vector<float> yerr ;
 
     // //----------------------------------------------------------------------------------
 
@@ -47,9 +47,11 @@ int analyse_data()
 
     // //----------------------------------------------------------------------------------
 
+    // open file to store graphs and fits
+    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
-
         for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
             // load the data for the given tree entry
             tree->GetEntry(iEntry);
@@ -75,7 +77,7 @@ int analyse_data()
         g->SetMarkerStyle(20);
         g->SetMarkerSize(0.75);
         g->SetMarkerColor(kBlue);
-        g->Draw();
+        //g->Draw();
         g->GetXaxis()->CenterTitle();
         g->GetYaxis()->CenterTitle();
 
@@ -274,18 +276,19 @@ int analyse_data()
         // // lfit->SetRange(0,5);
         // // lfit->Draw("SAME");
     
+        // Save the graphs
+        //g->SaveAs("CV_graph.png");
+        g->Write();
+        c1->Write(); // log scale graph and fit in the same canvas
+        glog->Write(); // justs log scale graph
+        //gnew->Write();
+
+        //clean data vectors
+        x.clear();
+        y.clear();
+        yerr.clear();
+
     } // end of channel loop
-
-    // Save the graphs
-    //g->SaveAs("CV_graph.png");
-    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
-    g->Write();
-    c1->Write(); // log scale graph and fit in the same canvas
-    glog->Write(); // justs log scale graph
-    //gnew->Write();
-
-
-
 
     return 0;
 }
