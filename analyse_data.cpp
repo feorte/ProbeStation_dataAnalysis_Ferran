@@ -6,6 +6,7 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 gROOT->SetBatch(kTRUE); // Disable graphics
+gStyle->SetOptStat(0); // Disable statistics box
 
 
 
@@ -51,6 +52,8 @@ int analyse_data()
 
     // open file to store graphs and fits
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+
+    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -202,6 +205,11 @@ int analyse_data()
         double V_dep = std::exp((p0_2 - p0_1) / (p1_1 - p1_2));
         std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
+        // store depletion voltage in histogram
+        hVdep->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
+        hVdep->SetBinContent(indx+1, V_dep); // Channel index starts at 0
+
+
         // Draw depletion voltage line
         TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
         line->SetLineColor(kMagenta+2);
@@ -291,6 +299,9 @@ int analyse_data()
         yerr.clear();
 
     } // end of channel loop
+
+    hVdep->Write();
+
 
     return 0;
 }
