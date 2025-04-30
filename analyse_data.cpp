@@ -5,6 +5,8 @@
 #include <vector> 
 #include "TGraph.h"
 #include "TGraphErrors.h"
+gROOT->SetBatch(kTRUE); // Disable graphics
+
 
 
 
