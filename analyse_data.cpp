@@ -53,7 +53,7 @@ int analyse_data()
     // open file to store graphs and fits
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
 
-    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages
+    TH1F* hVdep = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -256,8 +256,8 @@ int analyse_data()
         }
 
         TGraphErrors* gnew = new TGraphErrors(dim, &x[0], y_new.data(), &xerr[0], y_new_err.data());   
-        gnew->SetName(Form("Channel %d log scale", ch));
-        gnew->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
+        gnew->SetName(Form("Channel %d", ch));
+        gnew->SetTitle(Form("Channel %d;Voltage [V]; 1/C^{2} [1/pF^{2}]", ch));
         gnew->SetMarkerStyle(20);
         gnew->SetMarkerSize(0.75);
         gnew->SetMarkerColor(kBlue);
