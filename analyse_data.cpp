@@ -242,58 +242,58 @@ int analyse_data()
         // latex.SetTextSize(0.035);
         // latex.DrawLatexNDC(0.18, 0.92, Form("Channel %d: Depletion voltage analysis", ch));
 
-        // //--------Donnor density----------
+        //--------Donnor density----------
 
-        // std::vector<float> y_new(dim);
-        // std::vector<float> y_new_err(dim);
+        std::vector<float> y_new(dim);
+        std::vector<float> y_new_err(dim);
 
-        // // calculate 1/cs^2
-        // for (int i = 0; i < dim; ++i) {
-        //     y_new[i] = std::pow(y[i], -2);
+        // calculate 1/cs^2
+        for (int i = 0; i < dim; ++i) {
+            y_new[i] = std::pow(y[i], -2);
 
-        //     // Error propagation formula for x^{-2}: simga_x^{-2} = 2*sigma_x / (x^3)
-        //     y_new_err[i] = 2*yerr[i] / (pow(y[i],3));
-        // }
+            // error propagation formula for x^{-2}: simga_x^{-2} = 2*sigma_x / (x^3)
+            y_new_err[i] = 2*yerr[i] / (pow(y[i],3));
+        }
 
-        // TGraphErrors* gnew = new TGraphErrors(dim, &x[0], y_new.data(), &xerr[0], y_new_err.data());   
-        // gnew->SetName(Form("Channel %d log scale", ch));
-        // gnew->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
-        // gnew->SetMarkerStyle(20);
-        // gnew->SetMarkerSize(0.75);
-        // gnew->SetMarkerColor(kBlue);
+        TGraphErrors* gnew = new TGraphErrors(dim, &x[0], y_new.data(), &xerr[0], y_new_err.data());   
+        gnew->SetName(Form("Channel %d log scale", ch));
+        gnew->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
+        gnew->SetMarkerStyle(20);
+        gnew->SetMarkerSize(0.75);
+        gnew->SetMarkerColor(kBlue);
 
-        // // // Create canvas
-        // // TCanvas* c1 = new TCanvas("c1", "CV Analysis", 800, 600);
-        // // c1->SetGrid();
-        // // c1->SetTicks();
-        // // c1->SetLeftMargin(0.15);
-        // // c1->SetBottomMargin(0.15);
+        // Create canvas
+        TCanvas* c2 = new TCanvas(Form("donnor_density_channel_%d", ch), Form("donnor_density_channel_%d", ch), 800, 600);
+        c2->SetGrid();
+        c2->SetTicks();
+        c2->SetLeftMargin(0.15);
+        c2->SetBottomMargin(0.15);
 
-        // // Draw graph
-        // gnew->SetMarkerStyle(20);
-        // gnew->SetMarkerSize(0.8);
-        // gnew->SetMarkerColor(kBlue+2);
-        // gnew->GetXaxis()->SetTitleFont(42);
-        // gnew->GetYaxis()->SetTitleFont(42);
-        // gnew->GetXaxis()->SetLabelFont(42);
-        // gnew->GetYaxis()->SetLabelFont(42);
-        // gnew->GetXaxis()->SetTitleSize(0.05);
-        // gnew->GetYaxis()->SetTitleSize(0.05);
-        // gnew->GetXaxis()->SetTitleOffset(1.2);
-        // gnew->GetYaxis()->SetTitleOffset(1.4);
-        // gnew->Draw("AP"); // Important: "AP" to redraw axis properly
+        // Draw graph
+        gnew->SetMarkerStyle(20);
+        gnew->SetMarkerSize(0.8);
+        gnew->SetMarkerColor(kBlue+2);
+        gnew->GetXaxis()->SetTitleFont(42);
+        gnew->GetYaxis()->SetTitleFont(42);
+        gnew->GetXaxis()->SetLabelFont(42);
+        gnew->GetYaxis()->SetLabelFont(42);
+        gnew->GetXaxis()->SetTitleSize(0.05);
+        gnew->GetYaxis()->SetTitleSize(0.05);
+        gnew->GetXaxis()->SetTitleOffset(1.2);
+        gnew->GetYaxis()->SetTitleOffset(1.4);
 
-        // gnew->GetXaxis()->CenterTitle();
-        // gnew->GetYaxis()->CenterTitle();
+        gnew->Draw("AP"); // Important: "AP" to redraw axis properly
+        gnew->GetXaxis()->CenterTitle();
+        gnew->GetYaxis()->CenterTitle();
 
-        // // First fit: left region
-        // gnew->Fit("pol1", "", "", x[0], x[4]);
-        // // TF1* lfit = (TF1*)gnew->GetFunction("pol1")->Clone("lfit");
-        // // lfit->SetLineColor(kRed);
-        // // lfit->SetLineWidth(2);
-        // // lfit->SetLineStyle(2); // dashed
-        // // lfit->SetRange(0,5);
-        // // lfit->Draw("SAME");
+        // First fit: left region
+        gnew->Fit("pol1", "0", "", x[0], x[4]);
+        TF1* don_fit = (TF1*)gnew->GetFunction("pol1")->Clone("don_fit");
+        don_fit->SetLineColor(kRed);
+        don_fit->SetLineWidth(2);
+        don_fit->SetLineStyle(2); // dashed
+        don_fit->SetRange(0,5);
+        don_fit->Draw("SAME");
     
         // Save the graphs
         //g->SaveAs("CV_graph.png");
@@ -301,6 +301,7 @@ int analyse_data()
         c1->Write(); // log scale graph and fit in the same canvas
         glog->Write(); // justs log scale graph
         //gnew->Write();
+        c2->Write();
 
         //clean data vectors
         x.clear();
