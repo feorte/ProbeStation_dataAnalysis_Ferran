@@ -202,7 +202,8 @@ int analyse_data()
 
         // intersection point (depletion voltage V_dep)
         // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
-        double V_dep = std::exp((p0_2 - p0_1) / (p1_1 - p1_2));
+        double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2);
+        double V_dep = std::exp(log_Vdep); // convert back to linear scale
         std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
         // store depletion voltage in histogram
@@ -211,11 +212,19 @@ int analyse_data()
 
 
         // Draw depletion voltage line
-        TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
+        TLine* line = new TLine(log_Vdep, glog->GetYaxis()->GetXmin(), log_Vdep, glog->GetYaxis()->GetXmax());
         line->SetLineColor(kMagenta+2);
         line->SetLineStyle(9); // long dashed
         line->SetLineWidth(2);
         line->Draw("SAME");
+
+            // //----------------------------------------
+        // // Draw a vertical line at V_dep
+        // TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
+        // line->SetLineColor(kGreen+2);
+        // line->SetLineStyle(2); // dashed
+        // line->SetLineWidth(2);
+        // line->Draw("SAME");
 
         // Add legend
         TLegend* legend = new TLegend(0.18, 0.18, 0.5, 0.31);
