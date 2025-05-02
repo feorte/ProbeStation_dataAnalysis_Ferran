@@ -13,6 +13,10 @@ gStyle->SetOptStat(0); // Disable statistics box
 
 int analyse_data()
 {
+    //const char* fileName = "stored_data.root"; // name of the file to be opened
+    const float e = 1.602176634e-19; // charge of an electron in C
+    const float eps0 = 8.8541878128e-12; // vacuum permittivity in F/m
+    const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
     // read the data in the stored tree
     std::unique_ptr<TFile> data( TFile::Open("stored_data.root") );
@@ -53,7 +57,8 @@ int analyse_data()
     // open file to store graphs and fits
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
 
-    TH1F* hVdep = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages
+    TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
+    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -206,9 +211,10 @@ int analyse_data()
         double V_dep = std::exp(log_Vdep); // convert back to linear scale
         std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
-        // store depletion voltage in histogram
-        hVdep->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-        hVdep->SetBinContent(indx+1, V_dep); // Channel index starts at 0
+        // store depletion voltage in histograms
+        hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
+        hVdepxch->SetBinContent(indx+1, V_dep); // Channel index starts at 0
+        hVdep->Fill(V_dep); // fill histogram with depletion voltage
 
 
         // Draw depletion voltage line
@@ -310,7 +316,8 @@ int analyse_data()
 
     } // end of channel loop
 
-    hVdep->Write();
+    hVdepxch->Write();
+    hVdep->Write(); // write histogram with depletion voltages distribution
 
 
     return 0;
