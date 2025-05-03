@@ -9,13 +9,13 @@ gROOT->SetBatch(kTRUE); // Disable graphics
 gStyle->SetOptStat(0); // Disable statistics box
 
 
-
-
 int analyse_data()
 {
     //const char* fileName = "stored_data.root"; // name of the file to be opened
     const float e = 1.602176634e-19; // charge of an electron in C
     const float eps0 = 8.8541878128e-12; // vacuum permittivity in F/m
+    const float epsSi = 11.7; // relative permittivity of silicon
+    const float eps = epsSi * eps0; // permittivity of silicon in F/m
     const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
     // read the data in the stored tree
@@ -59,6 +59,7 @@ int analyse_data()
 
     TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
+    //TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -300,6 +301,12 @@ int analyse_data()
         don_fit->SetLineStyle(2); // dashed
         don_fit->SetRange(0,5);
         don_fit->Draw("SAME");
+
+        //Get donor density from slope of the fit
+        double p1_don = don_fit->GetParameter(1); //slope of the fit
+        double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}] 
+        std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
+
     
         // Save the graphs
         //g->SaveAs("CV_graph.png");
