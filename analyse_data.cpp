@@ -59,7 +59,7 @@ int analyse_data()
 
     TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
-    //TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
+    TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+35, 2e+35); // histogram to store depletion voltages distribution
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -294,7 +294,7 @@ int analyse_data()
         gnew->GetYaxis()->CenterTitle();
 
         // First fit: left region
-        gnew->Fit("pol1", "0", "", x[0], x[4]);
+        gnew->Fit("pol1", "0", "", x[1], x[6]);
         TF1* don_fit = (TF1*)gnew->GetFunction("pol1")->Clone("don_fit");
         don_fit->SetLineColor(kRed);
         don_fit->SetLineWidth(2);
@@ -306,6 +306,8 @@ int analyse_data()
         double p1_don = don_fit->GetParameter(1); //slope of the fit
         double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}] 
         std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
+        hdonden->Fill(donor_density); // fill histogram with donor density
+
 
     
         // Save the graphs
@@ -325,7 +327,7 @@ int analyse_data()
 
     hVdepxch->Write();
     hVdep->Write(); // write histogram with depletion voltages distribution
-
+    hdonden->Write(); // write histogram with donor density distribution
 
     return 0;
 }
