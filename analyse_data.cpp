@@ -59,7 +59,7 @@ int analyse_data()
 
     TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
-    TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+35, 2e+35); // histogram to store depletion voltages distribution
+    TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+34, 20e+34); // histogram to store depletion voltages distribution
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -182,7 +182,7 @@ int analyse_data()
         glog->GetYaxis()->CenterTitle();
 
         // First fit: left region
-        glog->Fit("pol1", "0", "", x_log[1], x_log[6]);
+        glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
         TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
         lfit->SetLineColor(kRed);
         lfit->SetLineWidth(2);
@@ -192,7 +192,7 @@ int analyse_data()
 
         // Second fit: right region
         TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
-        glog->Fit(rfit, "R0");
+        glog->Fit(rfit, "QR0");
         rfit->SetLineColor(kGreen+3);
         rfit->SetLineWidth(2);
         rfit->SetLineStyle(7); // dotted
@@ -294,7 +294,7 @@ int analyse_data()
         gnew->GetYaxis()->CenterTitle();
 
         // First fit: left region
-        gnew->Fit("pol1", "0", "", x[1], x[6]);
+        gnew->Fit("pol1", "Q0", "", x[1], x[6]);
         TF1* don_fit = (TF1*)gnew->GetFunction("pol1")->Clone("don_fit");
         don_fit->SetLineColor(kRed);
         don_fit->SetLineWidth(2);
