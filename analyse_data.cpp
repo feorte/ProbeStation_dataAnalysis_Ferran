@@ -66,18 +66,20 @@ int analyse_data()
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
     TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+10, 2e+11); // histogram to store depletion voltages distribution
 
-    auto bidi_h = new TH2F("bidi_h","2D Histo;Gaussian Vals;Exp. Vals",
+    // canvas to store 2D map of sensor with results
+    auto c0 = new TCanvas("c0", "Canvas", 800, 600);
+    auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y",
         16,0,16,  // X axis
         16,0,16); // Y axis
 
-    //bidi_h->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-    for (int i = 0; i < 16; ++i) {
+    // draw text with channel number
+    for (int i = 0; i < 16; ++i) { 
         for (int j = 0; j < 16; ++j) {
-            bidi_h->Fill(i+1, j+1, i+j+1);
+            channel_name->Fill(i, j, i+16*j+1);
         }
     }
 
-    bidi_h->Draw("TEXT");
+    channel_name->Draw("text");
 
 
     //------------------------------------MAIN LOOP----------------------------------------
@@ -291,6 +293,7 @@ int analyse_data()
     hVdepxch->Write();
     hVdep->Write(); // write histogram with depletion voltages distribution
     hdonden->Write(); // write histogram with donor density distribution
+    c0->Write(); // write 2D histogram canvas
 
     return 0;
 }
