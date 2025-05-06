@@ -66,6 +66,16 @@ int analyse_data()
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
     TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+34, 20e+34); // histogram to store depletion voltages distribution
 
+    auto bidi_h = new TH2F("bidi_h","2D Histo;Gaussian Vals;Exp. Vals",
+        16,0,16,  // X axis
+        16,0,16); // Y axis
+
+    //bidi_h->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
+    for ()
+    
+    int row = ch
+    bidi_h->Fill(ch%16, ch/16.-ch%16, ch)
+
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
         for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
@@ -253,8 +263,9 @@ int analyse_data()
         std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
         hdonden->Fill(donor_density); // fill histogram with donor density
 
+        //--------2D map------------
+        
 
-    
         // save the graphs
         //g->SaveAs("CV_graph.png");
         g->Write();
