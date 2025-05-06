@@ -101,7 +101,7 @@ int analyse_data()
             x_log[i] = std::log(x[i]);
             y_log[i] = std::log(y[i]);
 
-            // Error propagation formula for log(x): simga_log(x) = sigma_x / x
+            // error propagation formula for log(x): simga_log(x) = sigma_x / x
             //xerr_log[i] = xerr[i] / x[i]; // still, al 0s
             yerr_log[i] = yerr[i] / y[i];
         }
@@ -157,14 +157,14 @@ int analyse_data()
         // line->SetLineWidth(2);
         // line->Draw("SAME");
 
-        // Create canvas
+        // create canvas
         TCanvas* c1 = new TCanvas(Form("CV_dep_volt_channel_%d", ch), Form("CV_dep_volt_channel_%d", ch), 800, 600);
         c1->SetGrid();
         c1->SetTicks();
         c1->SetLeftMargin(0.15);
         c1->SetBottomMargin(0.15);
 
-        // Draw graph
+        // draw graph
         glog->SetMarkerStyle(20);
         glog->SetMarkerSize(0.8);
         glog->SetMarkerColor(kBlue+2);
@@ -176,12 +176,12 @@ int analyse_data()
         glog->GetYaxis()->SetTitleSize(0.05);
         glog->GetXaxis()->SetTitleOffset(1.2);
         glog->GetYaxis()->SetTitleOffset(1.4);
-        glog->Draw("AP"); // Important: "AP" to redraw axis properly
+        glog->Draw("AP"); // important: "AP" to redraw axis properly
 
         glog->GetXaxis()->CenterTitle();
         glog->GetYaxis()->CenterTitle();
 
-        // First fit: left region
+        // first fit: left region
         glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
         TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
         lfit->SetLineColor(kRed);
@@ -190,7 +190,7 @@ int analyse_data()
         lfit->SetRange(0,5);
         lfit->Draw("SAME");
 
-        // Second fit: right region
+        // second fit: right region
         TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
         glog->Fit(rfit, "QR0");
         rfit->SetLineColor(kGreen+3);
@@ -199,7 +199,7 @@ int analyse_data()
         rfit->SetRange(3.5,5.5);
         rfit->Draw("SAME");
 
-        // Calculate intersection
+        // calculate intersection
         double p0_1 = lfit->GetParameter(0);
         double p1_1 = lfit->GetParameter(1);
         double p0_2 = rfit->GetParameter(0);
@@ -207,18 +207,18 @@ int analyse_data()
         double p1_2 = 0; // fit to a constaqnt, so slope is 0
 
         // intersection point (depletion voltage V_dep)
-        // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
+        // the two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
         double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2);
         double V_dep = std::exp(log_Vdep); // convert back to linear scale
         std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
         // store depletion voltage in histograms
         hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-        hVdepxch->SetBinContent(indx+1, V_dep); // Channel index starts at 0
+        hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
 
 
-        // Draw depletion voltage line
+        // draw depletion voltage line
         TLine* line = new TLine(log_Vdep, glog->GetYaxis()->GetXmin(), log_Vdep, glog->GetYaxis()->GetXmax());
         line->SetLineColor(kMagenta+2);
         line->SetLineStyle(9); // long dashed
@@ -226,14 +226,14 @@ int analyse_data()
         line->Draw("SAME");
 
             // //----------------------------------------
-        // // Draw a vertical line at V_dep
+        // // draw a vertical line at V_dep
         // TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
         // line->SetLineColor(kGreen+2);
         // line->SetLineStyle(2); // dashed
         // line->SetLineWidth(2);
         // line->Draw("SAME");
 
-        // Add legend
+        // add legend
         TLegend* legend = new TLegend(0.18, 0.18, 0.5, 0.31);
         legend->SetTextFont(42);
         legend->SetTextSize(0.03);
@@ -243,7 +243,7 @@ int analyse_data()
         legend->AddEntry(line, Form("V_{dep} = %.2f V", V_dep), "l");
         legend->Draw("SAME");
 
-        // Optional: Add text
+        // optional: Add text
         // TLatex latex;
         // latex.SetTextFont(42);
         // latex.SetTextSize(0.035);
@@ -269,14 +269,14 @@ int analyse_data()
         gnew->SetMarkerSize(0.75);
         gnew->SetMarkerColor(kBlue);
 
-        // Create canvas
+        // create canvas
         TCanvas* c2 = new TCanvas(Form("donnor_density_channel_%d", ch), Form("donnor_density_channel_%d", ch), 800, 600);
         c2->SetGrid();
         c2->SetTicks();
         c2->SetLeftMargin(0.15);
         c2->SetBottomMargin(0.15);
 
-        // Draw graph
+        // draw graph
         gnew->SetMarkerStyle(20);
         gnew->SetMarkerSize(0.8);
         gnew->SetMarkerColor(kBlue+2);
@@ -289,20 +289,20 @@ int analyse_data()
         gnew->GetXaxis()->SetTitleOffset(1.2);
         gnew->GetYaxis()->SetTitleOffset(1.4);
 
-        gnew->Draw("AP"); // Important: "AP" to redraw axis properly
+        gnew->Draw("AP"); // important: "AP" to redraw axis properly
         gnew->GetXaxis()->CenterTitle();
         gnew->GetYaxis()->CenterTitle();
 
-        // First fit: left region
+        // first fit: left region
         gnew->Fit("pol1", "Q0", "", x[1], x[6]);
         TF1* don_fit = (TF1*)gnew->GetFunction("pol1")->Clone("don_fit");
         don_fit->SetLineColor(kRed);
         don_fit->SetLineWidth(2);
         don_fit->SetLineStyle(2); // dashed
-        don_fit->SetRange(0,5);
+        don_fit->SetRange(x[0], x[8]);
         don_fit->Draw("SAME");
 
-        //Get donor density from slope of the fit
+        //get donor density from slope of the fit
         double p1_don = don_fit->GetParameter(1); //slope of the fit
         double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}] 
         std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
@@ -310,7 +310,7 @@ int analyse_data()
 
 
     
-        // Save the graphs
+        // save the graphs
         //g->SaveAs("CV_graph.png");
         g->Write();
         c1->Write(); // log scale graph and fit in the same canvas
