@@ -64,17 +64,23 @@ int analyse_data()
 
     TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
-    TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+34, 20e+34); // histogram to store depletion voltages distribution
+    TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+10, 2e+11); // histogram to store depletion voltages distribution
 
     auto bidi_h = new TH2F("bidi_h","2D Histo;Gaussian Vals;Exp. Vals",
         16,0,16,  // X axis
         16,0,16); // Y axis
 
     //bidi_h->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-    for ()
-    
-    int row = ch
-    bidi_h->Fill(ch%16, ch/16.-ch%16, ch)
+    for (int i = 0; i < 16; ++i) {
+        for (int j = 0; j < 16; ++j) {
+            bidi_h->Fill(i+1, j+1, i+j+1);
+        }
+    }
+
+    bidi_h->Draw("TEXT");
+
+
+    //------------------------------------MAIN LOOP----------------------------------------
 
     for (int indx = 0; indx < 7; ++indx) { // loop over all channels (0-7)
         int dim=0; //number of different voltages tested
@@ -258,7 +264,8 @@ int analyse_data()
         don_fit->Draw("SAME");
 
         //get donor density from slope of the fit
-        double p1_don = don_fit->GetParameter(1); //slope of the fit
+        double p1_don = don_fit->GetParameter(1); //slope of the fit in [V^{-1}pF^{-2}]
+        p1_don = p1_don * std::pow(10,24); // convert from pF^{-2} to F^{-2}
         double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}] 
         std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
         hdonden->Fill(donor_density); // fill histogram with donor density
