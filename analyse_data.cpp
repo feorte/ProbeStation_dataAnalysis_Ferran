@@ -17,65 +17,47 @@ const float eps = epsSi * eps0; // permittivity of silicon in F/m
 const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
 
-
-
-
-
-
-
 int analyse_data()
 {
-    //const char* fileName = "stored_data.root"; // name of the file to be opened
+    // Load ROOT file and tree safely
+    auto file = std::unique_ptr<TFile>(TFile::Open("stored_data.root"));
+    if (!file || file->IsZombie()) {
+        std::cerr << "Error: Cannot open ROOT file.\n";
+        return -1;
+    }
 
-    // read the data in the stored tree
-    std::unique_ptr<TFile> data( TFile::Open("stored_data.root") );
-    auto tree = data->Get<TTree>("analysis");
+    auto tree = file->Get<TTree>("analysis");
     if (!tree) {
-        std::cerr << "Error: Failed to retrieve the 'analysis' tree from the file." << std::endl;
+        std::cerr << "Error: Tree 'analysis' not found in the file.\n";
         return -1;
     }
-        std::cerr << "Error: Could not open file 'stored_data.root' or file is corrupted." << std::endl;
-        return -1;
-    }
-    // enable only required branches
-    auto tree = data->Get<TTree>("analysis");
-    std::vector<std::string> branchNames = {"voltage", "channel", "cs", "cs_err"};
-    for (const auto& name : branchNames) {
+
+    // Enable only required branches
+    const std::vector<std::string> branches = {"voltage", "channel", "cs", "cs_err"};
+    tree->SetBranchStatus("*", false);
+    for (const auto& name : branches) {
         if (tree->GetBranch(name.c_str())) {
             tree->SetBranchStatus(name.c_str(), true);
         } else {
             std::cerr << "Warning: Branch '" << name << "' not found in the tree." << std::endl;
         }
     }
-    // ...but the branches we need
-    for (const auto& name : {"voltage", "channel", "cs", "cs_err"}) {
-        tree->SetBranchStatus(name, true);
-    }
 
-    // associate the branches to variables
-    float voltage;
-    tree->SetBranchAddress("voltage", &voltage);
-
+    // Bind branches to variables
+    float voltage = 0.0f;
     std::vector<int>* channel = nullptr;
-    tree->SetBranchAddress("channel", &channel);
-
     std::vector<float>* cs = nullptr;
-    tree->SetBranchAddress("cs", &cs);
-
     std::vector<float>* cs_err = nullptr;
+
+    tree->SetBranchAddress("voltage", &voltage);
+    tree->SetBranchAddress("channel", &channel);
+    tree->SetBranchAddress("cs", &cs);
     tree->SetBranchAddress("cs_err", &cs_err);
     
     // define variables for the CV graph
     std::vector<float> x ;
     std::vector<float> y ;
     std::vector<float> yerr ;
-
-    // //----------------------------------------------------------------------------------
-
-    // // which channel to analyse
-    // int indx = 0; // index of the channel to study (0 = first channel, 8 channels in total)
-
-    // //----------------------------------------------------------------------------------
 
     // open file to store graphs and fits
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
@@ -102,7 +84,6 @@ int analyse_data()
         int ch = channel->at(indx); 
         printf("Channel: %d\n", ch);
 
-        
         // create a TGraphErrors object and fill it with the data
         std::vector<float> xerr(dim, 0); // no error on x-axis
         TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
@@ -135,50 +116,6 @@ int analyse_data()
         glog->SetMarkerStyle(20);
         glog->SetMarkerSize(0.75);
         glog->SetMarkerColor(kBlue);
-
-        // // create a canvas to put everything together
-        // TCanvas* c1 = new TCanvas("c1", "c1", 800, 600);
-        // glog->Draw();
-        // glog->GetXaxis()->CenterTitle();
-        // glog->GetYaxis()->CenterTitle();
-
-        // // fit two lines on the graph to get the depletion voltage
-        // // First fit: left region (rising region)
-        // glog->Fit("pol1", "0", "", x_log[0], x_log[4]); 
-        // TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit"); // <--- CLONE HERE
-        // lfit->SetRange(0,5);
-        // lfit->Draw("SAME"); 
-
-        // // Second fit: rigt region (plateau region)
-        // TF1* rfit = new TF1("rfit", "pol1", x_log[dim-6], x_log[dim-1]); // Define second fit
-        // glog->Fit(rfit, "R0"); // R = restrict to function range, 0 = no auto draw
-        // rfit->SetRange(3.5,5.5);
-        // rfit->Draw("SAME");
-
-        // //----------------------------------------
-        // // Extract parameters
-        // double p0_1 = lfit->GetParameter(0); // Intercept of first fit
-        // double p1_1 = lfit->GetParameter(1); // Slope of first fit
-
-        // double p0_2 = rfit->GetParameter(0); // Intercept of second fit
-        // double p1_2 = rfit->GetParameter(1); // Slope of second fit
-
-
-        // //----------------------------------------
-        // // Find intersection (depletion voltage V_dep)
-        // // The two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
-        // double V_dep = (p0_2 - p0_1) / (p1_1 - p1_2);
-
-        // // Print it
-        // std::cout << "Depletion voltage V_dep = " << V_dep << std::endl;
-
-        // //----------------------------------------
-        // // Draw a vertical line at V_dep
-        // TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
-        // line->SetLineColor(kGreen+2);
-        // line->SetLineStyle(2); // dashed
-        // line->SetLineWidth(2);
-        // line->Draw("SAME");
 
         // create canvas
         TCanvas* c1 = new TCanvas(Form("CV_dep_volt_channel_%d", ch), Form("CV_dep_volt_channel_%d", ch), 800, 600);
@@ -240,21 +177,12 @@ int analyse_data()
         hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
 
-
         // draw depletion voltage line
         TLine* line = new TLine(log_Vdep, glog->GetYaxis()->GetXmin(), log_Vdep, glog->GetYaxis()->GetXmax());
         line->SetLineColor(kMagenta+2);
         line->SetLineStyle(9); // long dashed
         line->SetLineWidth(2);
         line->Draw("SAME");
-
-            // //----------------------------------------
-        // // draw a vertical line at V_dep
-        // TLine* line = new TLine(V_dep, glog->GetYaxis()->GetXmin(), V_dep, glog->GetYaxis()->GetXmax());
-        // line->SetLineColor(kGreen+2);
-        // line->SetLineStyle(2); // dashed
-        // line->SetLineWidth(2);
-        // line->Draw("SAME");
 
         // add legend
         TLegend* legend = new TLegend(0.18, 0.18, 0.5, 0.31);
@@ -266,14 +194,8 @@ int analyse_data()
         legend->AddEntry(line, Form("V_{dep} = %.2f V", V_dep), "l");
         legend->Draw("SAME");
 
-        // optional: Add text
-        // TLatex latex;
-        // latex.SetTextFont(42);
-        // latex.SetTextSize(0.035);
-        // latex.DrawLatexNDC(0.18, 0.92, Form("Channel %d: Depletion voltage analysis", ch));
 
         //--------Donnor density----------
-
         std::vector<float> y_new(dim);
         std::vector<float> y_new_err(dim);
 
