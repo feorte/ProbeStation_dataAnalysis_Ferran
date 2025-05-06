@@ -1,29 +1,52 @@
 #include <iostream>
-#include "TROOT.h"
 #include <fstream>
 #include <string>
 #include <vector> 
+
+#include "TROOT.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
 gROOT->SetBatch(kTRUE); // Disable graphics
 gStyle->SetOptStat(0); // Disable statistics box
 
+// used values/constants
+const float e = 1.602176634e-19; // charge of an electron in C
+const float eps0 = 8.8541878128e-12; // vacuum permittivity in F/m
+const float epsSi = 11.7; // relative permittivity of silicon
+const float eps = epsSi * eps0; // permittivity of silicon in F/m
+const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
+
+
+
+
+
+
+
 
 int analyse_data()
 {
     //const char* fileName = "stored_data.root"; // name of the file to be opened
-    const float e = 1.602176634e-19; // charge of an electron in C
-    const float eps0 = 8.8541878128e-12; // vacuum permittivity in F/m
-    const float epsSi = 11.7; // relative permittivity of silicon
-    const float eps = epsSi * eps0; // permittivity of silicon in F/m
-    const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
     // read the data in the stored tree
     std::unique_ptr<TFile> data( TFile::Open("stored_data.root") );
     auto tree = data->Get<TTree>("analysis");
-
-    // disable everything...
-    tree->SetBranchStatus("*", false);
+    if (!tree) {
+        std::cerr << "Error: Failed to retrieve the 'analysis' tree from the file." << std::endl;
+        return -1;
+    }
+        std::cerr << "Error: Could not open file 'stored_data.root' or file is corrupted." << std::endl;
+        return -1;
+    }
+    // enable only required branches
+    auto tree = data->Get<TTree>("analysis");
+    std::vector<std::string> branchNames = {"voltage", "channel", "cs", "cs_err"};
+    for (const auto& name : branchNames) {
+        if (tree->GetBranch(name.c_str())) {
+            tree->SetBranchStatus(name.c_str(), true);
+        } else {
+            std::cerr << "Warning: Branch '" << name << "' not found in the tree." << std::endl;
+        }
+    }
     // ...but the branches we need
     for (const auto& name : {"voltage", "channel", "cs", "cs_err"}) {
         tree->SetBranchStatus(name, true);
