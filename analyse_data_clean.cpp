@@ -109,10 +109,10 @@ int analyse_data_clean()
     gPad->Update();
 
     // --------------------Open file to store graphs, fits and histograms-------------------
-    
+
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
 
-    //------------------------------------Loop over all channels: CV curves and fill histograms----------------------------------------
+    //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
     // define variables for the CV graph
     std::vector<float> x ;
@@ -136,11 +136,7 @@ int analyse_data_clean()
             dim=iEntry+1;
         }
 
-        // which channel to analyse
-        int ch = channel->at(indx); 
-        printf("Channel: %d\n", ch);
-
-        // create a TGraphErrors object and fill it with the data
+        // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
         TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
         g->SetName(Form("Channel %d", ch));
@@ -152,7 +148,7 @@ int analyse_data_clean()
         g->GetXaxis()->CenterTitle();
         g->GetYaxis()->CenterTitle();
 
-        // create same graph but in log scale (necessary to get depletion voltage)
+        // -------------------CV GRAPH: log scale for depletion voltage--------------------
         // first create new vectors to hold the log-transformed data and the propagated errors:
         std::vector<float> x_log(dim), y_log(dim);
         std::vector<float> xerr_log(dim), yerr_log(dim);
@@ -173,7 +169,7 @@ int analyse_data_clean()
         glog->SetMarkerSize(0.75);
         glog->SetMarkerColor(kBlue);
 
-        // create canvas
+        // create canvas to draw graph and fit
         TCanvas* c1 = new TCanvas(Form("CV_dep_volt_channel_%d", ch), Form("CV_dep_volt_channel_%d", ch), 800, 600);
         c1->SetGrid();
         c1->SetTicks();
@@ -197,6 +193,7 @@ int analyse_data_clean()
         glog->GetXaxis()->CenterTitle();
         glog->GetYaxis()->CenterTitle();
 
+        // -----------------Fit and calculate depletion voltage------------------
         // first fit: left region
         glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
         TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
@@ -232,6 +229,9 @@ int analyse_data_clean()
         hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
         hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
+        hVdep_map->Fill(ch%16 // X position
+                        , ch/16 // Y position
+                        , V_dep); // fill 2D histogram with depletion voltage
 
         // draw depletion voltage line
         TLine* line = new TLine(log_Vdep, glog->GetYaxis()->GetXmin(), log_Vdep, glog->GetYaxis()->GetXmax());
