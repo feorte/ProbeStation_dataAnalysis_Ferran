@@ -136,6 +136,9 @@ int analyse_data_clean()
             dim=iEntry+1;
         }
 
+        // which channel to analyse
+        int ch = channel->at(indx); 
+
         // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
         TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
@@ -328,6 +331,11 @@ int analyse_data_clean()
 
     } // end of channel loop
 
+    canv_map->cd();
+    hVdep_map->SetTitle("Depletion Voltage Map;X;Y");
+    hVdep_map->SetStats(0); // disable stats box
+    hVdep_map->Draw("COLZ"); // draw histogram with color palette
+
     hVdepxch->Write();
     hVdep->Write(); // write histogram with depletion voltages distribution
     hndon->Write(); // write histogram with donor density distribution
@@ -335,7 +343,7 @@ int analyse_data_clean()
 
 
 
-    //canv_map->cd();
+    
 
 
 
