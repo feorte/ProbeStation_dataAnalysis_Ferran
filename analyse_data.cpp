@@ -67,7 +67,7 @@ int analyse_data()
     TH1F* hdonden = new TH1F("hdonden", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+10, 2e+11); // histogram to store depletion voltages distribution
 
     // canvas to store 2D map of sensor with results
-    auto c0 = new TCanvas("c0", "Canvas", 800, 600);
+    auto c0 = new TCanvas("c0", "Canvas", 600, 600);
     auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y",
         16,0,16,  // X axis
         16,0,16); // Y axis
@@ -78,9 +78,26 @@ int analyse_data()
             channel_name->Fill(i, j, i+16*j+1);
         }
     }
-
     channel_name->Draw("text");
+    // Disable ticks and axis visuals
+    gPad->SetTicks(0, 0);
+    gPad->SetFrameLineWidth(0);     // Frame box thickness
+    gPad->SetFrameBorderMode(0);    // No border
+    gPad->SetBorderMode(0);         // Canvas border
 
+    // Hide axis labels, titles, divisions
+    channel_name->GetXaxis()->SetLabelSize(0);
+    channel_name->GetYaxis()->SetLabelSize(0);
+    channel_name->GetXaxis()->SetTitle("");
+    channel_name->GetYaxis()->SetTitle("");
+    channel_name->GetXaxis()->SetNdivisions(0);
+    channel_name->GetYaxis()->SetNdivisions(0);
+
+    // Set axis line and tick widths to 0
+    channel_name->GetXaxis()->SetAxisColor(0);
+    channel_name->GetYaxis()->SetAxisColor(0);
+
+    gPad->Update();
 
     //------------------------------------MAIN LOOP----------------------------------------
 
