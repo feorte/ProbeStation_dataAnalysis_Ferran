@@ -74,39 +74,6 @@ int analyse_data_clean()
 
     //2D histogram that maps channels to positions on the sensor
     auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y", 16,0,16, 16,0,16);
-    
-    // ------------------------------------Create 2D map of sensor---------------------------------------------------
-
-    // canvas to store 2D map of sensor with results
-    auto canv_map = new TCanvas("canv_map", "Canvas", 600, 600);
-
-    // fill 2D histogram with channel numbers
-    for (int i = 0; i < 16; ++i) { 
-        for (int j = 0; j < 16; ++j) {
-            channel_name->Fill(i, j, i+16*j+1);
-        }
-    }
-    channel_name->Draw("text"); // draw histogram as text with channel number
-
-    // Disable ticks and axis visuals
-    gPad->SetTicks(0, 0);
-    gPad->SetFrameLineWidth(0);     // Frame box thickness
-    gPad->SetFrameBorderMode(0);    // No border
-    gPad->SetBorderMode(0);         // Canvas border
-
-    // Hide axis labels, titles, divisions
-    channel_name->GetXaxis()->SetLabelSize(0);
-    channel_name->GetYaxis()->SetLabelSize(0);
-    channel_name->GetXaxis()->SetTitle("");
-    channel_name->GetYaxis()->SetTitle("");
-    channel_name->GetXaxis()->SetNdivisions(0);
-    channel_name->GetYaxis()->SetNdivisions(0);
-
-    // Set axis line and tick widths to 0
-    channel_name->GetXaxis()->SetAxisColor(0);
-    channel_name->GetYaxis()->SetAxisColor(0);
-
-    gPad->Update();
 
     // --------------------Open file to store graphs, fits and histograms-------------------
 
@@ -135,6 +102,9 @@ int analyse_data_clean()
 
             dim=iEntry+1;
         }
+
+        // which channel to analyse
+        int ch = channel->at(indx); 
 
         // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
@@ -194,7 +164,8 @@ int analyse_data_clean()
         glog->GetYaxis()->CenterTitle();
 
         // -----------------Fit and calculate depletion voltage------------------
-        // first fit: left region
+
+        // first fit: left region (line with slope)
         glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
         TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
         lfit->SetLineColor(kRed);
@@ -203,7 +174,7 @@ int analyse_data_clean()
         lfit->SetRange(0,5);
         lfit->Draw("SAME");
 
-        // second fit: right region
+        // second fit: right region (horizontal line)
         TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
         glog->Fit(rfit, "QR0");
         rfit->SetLineColor(kGreen+3);
@@ -212,16 +183,12 @@ int analyse_data_clean()
         rfit->SetRange(3.5,5.5);
         rfit->Draw("SAME");
 
-        // calculate intersection
+        // calculate intersection (intersection point is depletion voltage V_dep)
         double p0_1 = lfit->GetParameter(0);
         double p1_1 = lfit->GetParameter(1);
         double p0_2 = rfit->GetParameter(0);
-        // double p1_2 = rfit->GetParameter(1);
         double p1_2 = 0; // fit to a constaqnt, so slope is 0
-
-        // intersection point (depletion voltage V_dep)
-        // the two lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
-        double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2);
+        double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2); // the lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
         double V_dep = std::exp(log_Vdep); // convert back to linear scale
         std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
@@ -229,7 +196,7 @@ int analyse_data_clean()
         hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
         hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
-        hVdep_map->Fill(ch%16 // X position
+        hVdep_map->Fill((ch-1)%16+1 // X position
                         , ch/16 // Y position
                         , V_dep); // fill 2D histogram with depletion voltage
 
@@ -310,9 +277,6 @@ int analyse_data_clean()
         std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
         hndon->Fill(donor_density); // fill histogram with donor density
 
-        //--------2D map------------
-        
-
         // save the graphs
         //g->SaveAs("CV_graph.png");
         g->Write();
@@ -327,6 +291,42 @@ int analyse_data_clean()
         yerr.clear();
 
     } // end of channel loop
+
+    // ------------------------------------Create 2D map of sensor---------------------------------------------------
+
+    // canvas to store 2D map of sensor with results
+    auto canv_map = new TCanvas("canv_map", "Canvas", 600, 600);
+
+    // fill 2D histogram with channel numbers
+    for (int i = 0; i < 16; ++i) { 
+        for (int j = 0; j < 16; ++j) {
+            channel_name->Fill(i, j, i+16*j+1);
+        }
+    }
+    hVdep_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    channel_name->Draw("text same"); // draw histogram as text with channel number
+
+    // Disable ticks and axis visuals
+    gPad->SetTicks(0, 0);
+    gPad->SetFrameLineWidth(0);     // Frame box thickness
+    gPad->SetFrameBorderMode(0);    // No border
+    gPad->SetBorderMode(0);         // Canvas border
+
+    // Hide axis labels, titles, divisions
+    channel_name->GetXaxis()->SetLabelSize(0);
+    channel_name->GetYaxis()->SetLabelSize(0);
+    channel_name->GetXaxis()->SetTitle("");
+    channel_name->GetYaxis()->SetTitle("");
+    channel_name->GetXaxis()->SetNdivisions(0);
+    channel_name->GetYaxis()->SetNdivisions(0);
+
+    // Set axis line and tick widths to 0
+    channel_name->GetXaxis()->SetAxisColor(0);
+    channel_name->GetYaxis()->SetAxisColor(0);
+
+    gPad->Update();
+
+    
 
     hVdepxch->Write();
     hVdep->Write(); // write histogram with depletion voltages distribution
