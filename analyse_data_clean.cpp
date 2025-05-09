@@ -197,7 +197,7 @@ int analyse_data_clean()
         hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
         hVdep_map->Fill((ch-1)%16 // X position (from 0 to 15)
-                        , ch/16 // Y position
+                        , (ch-1)/16 // Y position
                         , V_dep); // fill 2D histogram with depletion voltage
 
         // draw depletion voltage line
