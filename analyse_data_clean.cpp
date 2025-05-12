@@ -219,7 +219,8 @@ int analyse_data_clean()
         legend->Draw("SAME");
 
 
-        //--------Donnor density----------
+        //----------------------Donnor density-------------------------
+
         std::vector<float> y_new(dim);
         std::vector<float> y_new_err(dim);
 
@@ -279,6 +280,9 @@ int analyse_data_clean()
 
         // fill histogram with donor density
         hndon->Fill(donor_density); 
+        hndon_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
+                        , ((ch-1)/16)+1 // Y position
+                        , V_dep); // fill 2D histogram with depletion voltage
 
         // save the graphs
         //g->SaveAs("CV_graph.png");
