@@ -307,7 +307,7 @@ int analyse_data_clean()
         //g->SaveAs("CV_graph.png");
         g->Write();
         c1->Write(); // log scale graph and fit in the same canvas
-        glog->Write(); // justs log scale graph
+        // glog->Write(); // justs log scale graph
         //gnew->Write();
         c2->Write();
 

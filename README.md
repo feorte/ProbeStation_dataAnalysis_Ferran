@@ -5,3 +5,5 @@ To run simply write `root main.cpp` on a terminal with `ROOT`.
 
 09/05/25
 ficar bins dimensionals pa que el mig del bin "1" caiga damunt de la posicio x=1, utilitzar 0.5 per a ello. Elegir color que tinga molta variacio per els colors mitjans i pa daltonics: https://root.cern.ch/doc/master/classTColor.html#C06a
+
+capacitancia v > vd (sacar del fit) en vez de 100V o 200V
