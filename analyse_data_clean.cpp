@@ -61,7 +61,7 @@ int analyse_data_clean()
     // ------------------------------------Create histograms---------------------------------------------------
 
     // 1D histograms to store depletion voltages and donor density distributions
-    TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 7, 0, 7); // histogram to store depletion voltages per channel
+    TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 8, 0, 8); // histogram to store depletion voltages per channel
     TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
     TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+10, 2e+11); // histogram to store depletion voltages distribution
     
@@ -70,10 +70,19 @@ int analyse_data_clean()
         16,0.5,16.5,  // X axis
         16,0.5,16.5); // Y axis
     auto hndon_map = new TH2F("hndon_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-    auto hcs_map = new TH2F("hcs_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+    auto hcs_100V_map = new TH2F("hcs_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+    auto hcs_200V_map = new TH2F("hcs_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+
 
     //2D histogram that maps channels to positions on the sensor
     auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+
+    // fill 2D histogram with channel numbers
+    for (int i = 1; i < 17; ++i) { 
+        for (int j = 1; j < 17; ++j) {
+            channel_name->Fill(i, j, i+16*(j-1));
+        }
+    }
 
     // --------------------Open file to store graphs, fits and histograms-------------------
 
@@ -103,10 +112,22 @@ int analyse_data_clean()
             dim=iEntry+1;
         }
 
-        // which channel to analyse
+        // which channel analysing
         int ch = channel->at(indx);
         printf("Channel: %d\n", ch); 
 
+        // fill capacitance histogram at 100 V
+        hcs_100V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
+                    , ((ch-1)/16)+1 // Y position
+                    , y[13]); // size vector = 19
+        cout<<y[13]<<endl;
+        // fill capacitance histogram at 200 V
+        hcs_200V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
+                    , ((ch-1)/16)+1 // Y position
+                    , y[18]); // size vector = 19
+        
+        cout<<y[18]<<endl;
+        
         // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
         TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
@@ -282,7 +303,7 @@ int analyse_data_clean()
         hndon->Fill(donor_density); 
         hndon_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                         , ((ch-1)/16)+1 // Y position
-                        , V_dep); // fill 2D histogram with depletion voltage
+                        , donor_density); // fill 2D histogram with depletion voltage
 
         // save the graphs
         //g->SaveAs("CV_graph.png");
@@ -297,21 +318,33 @@ int analyse_data_clean()
         y.clear();
         yerr.clear();
 
+
     } // end of channel loop
 
     // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
-    // canvas to store 2D map of sensor with results
-    auto canv_map = new TCanvas("canv_map", "Canvas", 600, 600);
-
-    // fill 2D histogram with channel numbers
-    for (int i = 1; i < 17; ++i) { 
-        for (int j = 1; j < 17; ++j) {
-            channel_name->Fill(i, j, i+16*(j-1));
-        }
-    }
+    // canvases to store 2D map of sensor with results
+    // depletion voltage
+    auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
     hVdep_map->Draw("COLZ"); // draw histogram of Vdep as color map
     channel_name->Draw("text same"); // draw histogram as text with channel number
+
+    // donnor density
+    auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
+    hndon_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    channel_name->Draw("text same"); // draw histogram as text with channel number
+
+    // capacitance 100 V
+    auto ccs100 = new TCanvas("ccs100", "Canvas", 600, 600);
+    hcs_100V_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    channel_name->Draw("text same"); // draw histogram as text with channel number
+
+    // capacitance 200 V
+    auto ccs200 = new TCanvas("ccs200", "Canvas", 600, 600);
+    hcs_200V_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    channel_name->Draw("text same"); // draw histogram as text with channel number
+
+
 
     // Disable ticks and axis visuals
     gPad->SetTicks(0, 0);
@@ -335,15 +368,13 @@ int analyse_data_clean()
 
     
 
-    hVdepxch->Write();
+    hVdepxch->Write(); // write histogram with depletion voltages per channel
     hVdep->Write(); // write histogram with depletion voltages distribution
     hndon->Write(); // write histogram with donor density distribution
-    canv_map->Write(); // write 2D histogram canvas
-
-
-
-    //canv_map->cd();
-
+    cVdep->Write();
+    cndon->Write();
+    ccs100->Write();
+    ccs200->Write(); 
 
 
     return 0;
