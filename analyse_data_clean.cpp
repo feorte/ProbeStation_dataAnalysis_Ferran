@@ -120,14 +120,12 @@ int analyse_data_clean()
         hcs_100V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                     , ((ch-1)/16)+1 // Y position
                     , y[13]); // size vector = 19
-        cout<<y[13]<<endl;
+                    
         // fill capacitance histogram at 200 V
         hcs_200V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                     , ((ch-1)/16)+1 // Y position
                     , y[18]); // size vector = 19
-        
-        cout<<y[18]<<endl;
-        
+                
         // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
         TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
@@ -212,7 +210,7 @@ int analyse_data_clean()
         double p1_2 = 0; // fit to a constaqnt, so slope is 0
         double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2); // the lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
         double V_dep = std::exp(log_Vdep); // convert back to linear scale
-        std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
+        // std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
         // store depletion voltage in histograms
         hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
@@ -297,7 +295,7 @@ int analyse_data_clean()
         double p1_don = don_fit->GetParameter(1); //slope of the fit in [V^{-1}pF^{-2}]
         p1_don = p1_don * std::pow(10,24); // convert from pF^{-2} to F^{-2}
         double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}] 
-        std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
+        // std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
 
         // fill histogram with donor density
         hndon->Fill(donor_density); 
@@ -344,29 +342,25 @@ int analyse_data_clean()
     hcs_200V_map->Draw("COLZ"); // draw histogram of Vdep as color map
     channel_name->Draw("text same"); // draw histogram as text with channel number
 
+    // // Disable ticks and axis visuals
+    // gPad->SetTicks(0, 0);
+    // gPad->SetFrameLineWidth(0);     // Frame box thickness
+    // gPad->SetFrameBorderMode(0);    // No border
+    // gPad->SetBorderMode(0);         // Canvas border
 
+    // // Hide axis labels, titles, divisions
+    // channel_name->GetXaxis()->SetLabelSize(0);
+    // channel_name->GetYaxis()->SetLabelSize(0);
+    // channel_name->GetXaxis()->SetTitle("");
+    // channel_name->GetYaxis()->SetTitle("");
+    // channel_name->GetXaxis()->SetNdivisions(0);
+    // channel_name->GetYaxis()->SetNdivisions(0);
 
-    // Disable ticks and axis visuals
-    gPad->SetTicks(0, 0);
-    gPad->SetFrameLineWidth(0);     // Frame box thickness
-    gPad->SetFrameBorderMode(0);    // No border
-    gPad->SetBorderMode(0);         // Canvas border
+    // // Set axis line and tick widths to 0
+    // channel_name->GetXaxis()->SetAxisColor(0);
+    // channel_name->GetYaxis()->SetAxisColor(0);
 
-    // Hide axis labels, titles, divisions
-    channel_name->GetXaxis()->SetLabelSize(0);
-    channel_name->GetYaxis()->SetLabelSize(0);
-    channel_name->GetXaxis()->SetTitle("");
-    channel_name->GetYaxis()->SetTitle("");
-    channel_name->GetXaxis()->SetNdivisions(0);
-    channel_name->GetYaxis()->SetNdivisions(0);
-
-    // Set axis line and tick widths to 0
-    channel_name->GetXaxis()->SetAxisColor(0);
-    channel_name->GetYaxis()->SetAxisColor(0);
-
-    gPad->Update();
-
-    
+    // gPad->Update();
 
     hVdepxch->Write(); // write histogram with depletion voltages per channel
     hVdep->Write(); // write histogram with depletion voltages distribution
