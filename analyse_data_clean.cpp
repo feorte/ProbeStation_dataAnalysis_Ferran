@@ -70,8 +70,7 @@ int analyse_data_clean()
         16,0.5,16.5,  // X axis
         16,0.5,16.5); // Y axis
     auto hndon_map = new TH2F("hndon_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-    auto hcs_100V_map = new TH2F("hcs_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-    auto hcs_200V_map = new TH2F("hcs_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+    auto hcs_plateau_map = new TH2F("hcs_plateau_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
 
 
     //2D histogram that maps channels to positions on the sensor
@@ -115,16 +114,6 @@ int analyse_data_clean()
         // which channel analysing
         int ch = channel->at(indx);
         printf("Channel: %d\n", ch); 
-
-        // fill capacitance histogram at 100 V
-        hcs_100V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                    , ((ch-1)/16)+1 // Y position
-                    , y[13]); // size vector = 19
-                    
-        // fill capacitance histogram at 200 V
-        hcs_200V_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                    , ((ch-1)/16)+1 // Y position
-                    , y[18]); // size vector = 19
                 
         // -------------------CV GRAPH--------------------
         std::vector<float> xerr(dim, 0); // no error on x-axis
@@ -211,6 +200,20 @@ int analyse_data_clean()
         double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2); // the lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
         double V_dep = std::exp(log_Vdep); // convert back to linear scale
         // std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
+
+        // store capacitance of the right plateau of CV in 2D histogram
+        hcs_plateau_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
+                    , ((ch-1)/16)+1 // Y position
+                    , std::exp(p0_2)); // value of constant line in V 
+        
+        // lets try to do the fit directly on CV (no log scale)
+        TF1* rfit2 = new TF1("rfit2", "pol0", x[dim-6], x[dim-1]);
+        g->Fit(rfit2, "QR0");
+
+        double p0_3 = rfit2->GetParameter(0);
+        cout << "fit to log scale: " << std::exp(p0_2) << std::endl << "fit to linear scale: " << p0_3 << std::endl;
+
+
 
         // store depletion voltage in histograms
         hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
@@ -308,7 +311,7 @@ int analyse_data_clean()
         g->Write();
         c1->Write(); // log scale graph and fit in the same canvas
         // glog->Write(); // justs log scale graph
-        //gnew->Write();
+        // gnew->Write();
         c2->Write();
 
         //clean data vectors
@@ -325,21 +328,20 @@ int analyse_data_clean()
     // depletion voltage
     auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
     hVdep_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
     channel_name->Draw("text same"); // draw histogram as text with channel number
+
 
     // donnor density
     auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
     hndon_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
     channel_name->Draw("text same"); // draw histogram as text with channel number
 
-    // capacitance 100 V
-    auto ccs100 = new TCanvas("ccs100", "Canvas", 600, 600);
-    hcs_100V_map->Draw("COLZ"); // draw histogram of Vdep as color map
-    channel_name->Draw("text same"); // draw histogram as text with channel number
-
-    // capacitance 200 V
-    auto ccs200 = new TCanvas("ccs200", "Canvas", 600, 600);
-    hcs_200V_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    // capacitance in rigt plateau of CV
+    auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
+    hcs_plateau_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
     channel_name->Draw("text same"); // draw histogram as text with channel number
 
     // // Disable ticks and axis visuals
@@ -367,8 +369,7 @@ int analyse_data_clean()
     hndon->Write(); // write histogram with donor density distribution
     cVdep->Write();
     cndon->Write();
-    ccs100->Write();
-    ccs200->Write(); 
+    ccsplat->Write();
 
 
     return 0;

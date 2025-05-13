@@ -8,3 +8,5 @@ ficar bins dimensionals pa que el mig del bin "1" caiga damunt de la posicio x=1
 
 capacitancia v > vd (sacar del fit) en vez de 100V o 200V.
 colores, 0 no es necesario, titulo eje z (colorbar?)
+
+dubte: trac cs del plateau en log scale i pase a escala normal (pF) o faig un fit en la escala normal pa traureu?
