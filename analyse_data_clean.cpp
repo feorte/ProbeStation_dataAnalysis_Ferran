@@ -324,25 +324,35 @@ int analyse_data_clean()
 
     // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
-    // canvases to store 2D map of sensor with results
     // depletion voltage
     auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
-    hVdep_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    gStyle->SetPalette(58);
+    hVdep_map->SetContour(99);
+    hVdep_map->Draw("COLZ");
     hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
-    channel_name->Draw("text same"); // draw histogram as text with channel number
+    channel_name->Draw("text same");
+    cVdep->Update();
 
 
     // donnor density
     auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
-    hndon_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    cndon->cd();
+    gStyle->SetPalette(58);
+    hndon_map->SetContour(99);
+    hndon_map->Draw("COLZ");
     hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
-    channel_name->Draw("text same"); // draw histogram as text with channel number
+    channel_name->Draw("text same");
+    cndon->Update();
 
-    // capacitance in rigt plateau of CV
+    // capacitance
     auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
-    hcs_plateau_map->Draw("COLZ"); // draw histogram of Vdep as color map
+    gStyle->SetPalette(58);
+    hcs_plateau_map->SetContour(99);
+    hcs_plateau_map->Draw("COLZ");
     hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
-    channel_name->Draw("text same"); // draw histogram as text with channel number
+    channel_name->Draw("text same");
+    ccsplat->Update();
+
 
     // // Disable ticks and axis visuals
     // gPad->SetTicks(0, 0);
