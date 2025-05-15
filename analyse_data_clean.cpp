@@ -62,8 +62,8 @@ int analyse_data_clean()
 
     // 1D histograms to store depletion voltages and donor density distributions
     TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 80, 0, 200); // histogram to store depletion voltages distribution
-    TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 80, 1e+10, 1.1e+12); // histogram to store depletion voltages distribution
+    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 50, 17, 80); // histogram to store depletion voltages distribution
+    TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, 3e+10, 2e+11); // histogram to store depletion voltages distribution
     
     // 2D histogram to store capacitance, depletion voltage and donor density of every channel
     auto hVdep_map = new TH2F("hVdep_map","Sensor pixels;X;Y",
@@ -350,6 +350,8 @@ int analyse_data_clean()
     auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
     gStyle->SetPalette(58);
     hVdep_map->SetContour(99);
+    hVdep_map->SetMinimum(17);
+    hVdep_map->SetMaximum(80);
     hVdep_map->Draw("COLZ");
     hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
     channel_name->Draw("text same");
@@ -361,6 +363,8 @@ int analyse_data_clean()
     cndon->cd();
     gStyle->SetPalette(58);
     hndon_map->SetContour(99);
+    hndon_map->SetMinimum(3e+10);
+    hndon_map->SetMaximum(2e+11);
     hndon_map->Draw("COLZ");
     hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
     channel_name->Draw("text same");
@@ -370,6 +374,8 @@ int analyse_data_clean()
     auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
     gStyle->SetPalette(58);
     hcs_plateau_map->SetContour(99);
+    // hcs_plateau_map->SetMinimum(zmin);
+    // hcs_plateau_map->SetMaximum(zmax);
     hcs_plateau_map->Draw("COLZ");
     hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
     channel_name->Draw("text same");
