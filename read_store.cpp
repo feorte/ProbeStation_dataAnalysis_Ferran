@@ -9,19 +9,53 @@ int read_store()
 {
     // read the data
     std::ifstream data ("CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"); // open the file directly when initializing the stream object
-    if (data.is_open()) {
+    
+    std::vector<int> customChannels;
 
+    if (data.is_open()) {
         std::string line;
-        
-        // read first the header lines which are not tabular data 
-        for (int i=0; i<30; i++) {
-            std::getline(data,line);
+
+        // Read the first 30 lines (these include headers and metadata)
+        for (int i = 0; i < 30; ++i) {
+            std::getline(data, line);
+
+            // Line 16 (index 15) contains the custom channels info
+            if (i == 15) {
+                size_t pos = line.find(":");
+                if (pos != std::string::npos) {
+                    // Extract everything after the colon
+                    std::string channelsStr = line.substr(pos + 1);
+
+                    // Remove leading whitespace
+                    channelsStr.erase(0, channelsStr.find_first_not_of(" \t"));
+
+                    if (channelsStr == "None") {
+                        // If "None", that means all 256 channels are used
+                        for (int ch = 1; ch <= 256; ++ch) {
+                            customChannels.push_back(ch);
+                        }
+                    } else {
+                        // Otherwise, parse the comma-separated list of custom channels
+                        std::stringstream ss(channelsStr);
+                        std::string channel;
+
+                        while (std::getline(ss, channel, ',')) {
+                            int ch = std::stoi(channel); // convert string to int
+                            customChannels.push_back(ch);
+                        }
+                    }
+                }
+            }
         }
-         
-        //// read and show the tabular data 
-        // while (std::getline(data,line)) {
-        //     std::cout << line << endl;
-        // }
+
+        // Optional: print the list of channels for verification
+        std::cout << "Custom channels (" << customChannels.size() << "): ";
+        for (int ch : customChannels) {
+            std::cout << ch << " ";
+        }
+        std::cout << std::endl;
+
+        int n_ch = customChannels.size(); // number of channels
 
         // create the storing file and a tree to store the data
         std::unique_ptr<TFile> myFile( TFile::Open("stored_data.root", "RECREATE") );
@@ -88,15 +122,10 @@ int read_store()
         // create the tree for the analysis
         auto analysis = std::make_unique<TTree>("analysis", "Analysis");
 
-        int n_ch = 8; // number of channels
-
-        // create a vector of channels
-        std::vector <int> used_ch = {1,48,57,65,120,193,241,256};
-
         // define the branches;
         analysis->Branch("voltage", &voltage);
 
-        analysis->Branch("channel", &used_ch);
+        analysis->Branch("channel", &customChannels);
 
         std::vector<float> cs_anl(n_ch);
         analysis->Branch("cs", &cs_anl);
