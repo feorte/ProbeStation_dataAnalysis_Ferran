@@ -2,3 +2,12 @@
 C++ code that creates root files to store the data from the measurements on the prove stations.
 It creates two root trees, one to store the raw date and another one that prepares the data to analyze it later.
 To run simply write `root main.cpp` on a terminal with `ROOT`.
+
+09/05/25
+ficar bins dimensionals pa que el mig del bin "1" caiga damunt de la posicio x=1, utilitzar 0.5 per a ello. Elegir color que tinga molta variacio per els colors mitjans i pa daltonics: https://root.cern.ch/doc/master/classTColor.html#C06a
+
+capacitancia v > vd (sacar del fit) en vez de 100V o 200V.
+colores, 0 no es necesario, titulo eje z (colorbar?)
+
+dubte: trac cs del plateau en log scale i pase a escala normal (pF) o faig un fit en la escala normal pa traureu?
+colors i automatizar seleccio de numeros, punts pa fits, valors... lleguir nombre de canals i noms de canals en codig de llegir i crear tree. preguntar si propagacio de errors be 
