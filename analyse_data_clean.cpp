@@ -94,7 +94,19 @@ int analyse_data_clean()
     std::vector<float> y ;
     std::vector<float> yerr ;
 
-    for (int indx = 0; indx < 8; ++indx) { // loop over all channels (0-7)
+    // ---------------------Get how many different voltages an channels were tested---------------------
+
+    int n_volt=0; //number of different voltages tested
+    int n_ch=0; //number of different voltages tested
+
+        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            // load the data for the given tree entry
+            tree->GetEntry(iEntry);
+            n_volt=iEntry+1;
+        }
+    n_ch = channel->size();
+
+    for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels (0-7)
 
         //------------------------------------Load all data from given channel----------------------------------------
 
