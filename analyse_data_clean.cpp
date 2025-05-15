@@ -48,13 +48,13 @@ int analyse_data_clean()
     }
 
     // Bind branches to variables
-    float volt = 0.0f;
-    std::vector<int>* ch = nullptr;
+    float voltage = 0.0f;
+    std::vector<int>* channel = nullptr;
     std::vector<float>* cs = nullptr;
     std::vector<float>* cs_err = nullptr;
 
-    tree->SetBranchAddress("voltage", &volt);
-    tree->SetBranchAddress("channel", &all_ch);
+    tree->SetBranchAddress("voltage", &voltage);
+    tree->SetBranchAddress("channel", &channel);
     tree->SetBranchAddress("cs", &cs);
     tree->SetBranchAddress("cs_err", &cs_err);
  
@@ -87,49 +87,37 @@ int analyse_data_clean()
 
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
 
-    //------------------------------------Put tree data in variables----------------------------------------
-
-    int dim=0; //number of different voltages tested
-    for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
-        // load the data for the given tree entry
-        tree->GetEntry(iEntry);
-
-        dim=iEntry+1;
-    }
-
     //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
-    
+    // define variables for the CV graph
+    std::vector<float> x ;
+    std::vector<float> y ;
+    std::vector<float> yerr ;
+
     for (int indx = 0; indx < 8; ++indx) { // loop over all channels (0-7)
 
         //------------------------------------Load all data from given channel----------------------------------------
 
-        // int dim=0; //number of different voltages tested
-        // for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
-        //     // load the data for the given tree entry
-        //     tree->GetEntry(iEntry);
+        int dim=0; //number of different voltages tested
+        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            // load the data for the given tree entry
+            tree->GetEntry(iEntry);
 
-        //     // fill variables for the CV graph
-        //     x.push_back(voltage);
-        //     y.push_back(cs->at(indx));
-        //     yerr.push_back(cs_err->at(indx));
+            // fill variables for the CV graph
+            x.push_back(voltage);
+            y.push_back(cs->at(indx));
+            yerr.push_back(cs_err->at(indx));
 
-        //     dim=iEntry+1;
-        // }
+            dim=iEntry+1;
+        }
 
-<<<<<<< HEAD
-        // which channel to analyse
-        int ch = channel->at(indx); 
-
-=======
         // which channel analysing
-        int ch = all_ch->at(indx); // channel number
-        std::cout << "Channel: " << ch << std::endl;
+        int ch = channel->at(indx);
+        printf("Channel: %d\n", ch); 
                 
->>>>>>> d03cddbc2f83fa9a270605e47fff0aea9d0b00ba
         // -------------------CV GRAPH--------------------
-        std::vector<float> volt_err(dim, 0); // no error on x-axis
-        TGraph *g = new TGraphErrors(dim, &volt[0], &cs[0], &volt_err[0], &cs_err[0]);
+        std::vector<float> xerr(dim, 0); // no error on x-axis
+        TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
         g->SetName(Form("Channel %d", ch));
         g->SetTitle(Form("Channel %d;Voltage [V]; Capacitance [pF]", ch));
         g->SetMarkerStyle(20);
@@ -141,19 +129,19 @@ int analyse_data_clean()
 
         // -------------------CV GRAPH: log scale for depletion voltage--------------------
         // first create new vectors to hold the log-transformed data and the propagated errors:
-        std::vector<float> volt_log(dim), cs_log(dim);
-        std::vector<float> volt_log_err(dim), cs_log_err(dim);
+        std::vector<float> x_log(dim), y_log(dim);
+        std::vector<float> xerr_log(dim), yerr_log(dim);
 
         for (int i = 0; i < dim; ++i) {
-            volt_log[i] = std::log(volt[i]);
-            cs_log[i] = std::log(cs[i]);
+            x_log[i] = std::log(x[i]);
+            y_log[i] = std::log(y[i]);
 
             // error propagation formula for log(x): simga_log(x) = sigma_x / x
-            //volt_log_err[i] = volt_err[i] / volt[i]; // still, all 0s
-            cs_log_err[i] = cs_err[i] / cs[i];
+            //xerr_log[i] = xerr[i] / x[i]; // still, al 0s
+            yerr_log[i] = yerr[i] / y[i];
         }
 
-        TGraphErrors* glog = new TGraphErrors(dim, volt_log.data(), cs_log.data(), &volt_err[0], cs_log_err.data());   
+        TGraphErrors* glog = new TGraphErrors(dim, x_log.data(), y_log.data(), &xerr[0], yerr_log.data());   
         glog->SetName(Form("Channel %d log scale", ch));
         glog->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
         glog->SetMarkerStyle(20);
@@ -187,7 +175,7 @@ int analyse_data_clean()
         // -----------------Fit and calculate depletion voltage------------------
 
         // first fit: left region (line with slope)
-        glog->Fit("pol1", "Q0", "", volt_log[1], volt_log[6]);
+        glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
         TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
         lfit->SetLineColor(kRed);
         lfit->SetLineWidth(2);
@@ -196,7 +184,7 @@ int analyse_data_clean()
         lfit->Draw("SAME");
 
         // second fit: right region (horizontal line)
-        TF1* rfit = new TF1("rfit", "pol0", volt_log[dim-6], volt_log[dim-1]);
+        TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
         glog->Fit(rfit, "QR0");
         rfit->SetLineColor(kGreen+3);
         rfit->SetLineWidth(2);
@@ -219,7 +207,7 @@ int analyse_data_clean()
                     , std::exp(p0_2)); // value of constant line in V 
         
         // lets try to do the fit directly on CV (no log scale)
-        TF1* rfit2 = new TF1("rfit2", "pol0", volt[dim-6], volt[dim-1]);
+        TF1* rfit2 = new TF1("rfit2", "pol0", x[dim-6], x[dim-1]);
         g->Fit(rfit2, "QR0");
 
         double p0_3 = rfit2->GetParameter(0);
@@ -252,20 +240,21 @@ int analyse_data_clean()
         legend->AddEntry(line, Form("V_{dep} = %.2f V", V_dep), "l");
         legend->Draw("SAME");
 
+
         //----------------------Donnor density-------------------------
 
-        std::vector<float> cs_negpow(dim);
-        std::vector<float> cs_negpow_err(dim);
+        std::vector<float> y_new(dim);
+        std::vector<float> y_new_err(dim);
 
         // calculate 1/cs^2
         for (int i = 0; i < dim; ++i) {
-            cs_negpow[i] = std::pow(cs[i], -2);
+            y_new[i] = std::pow(y[i], -2);
 
             // error propagation formula for x^{-2}: simga_x^{-2} = 2*sigma_x / (x^3)
-            cs_negpow_err[i] = 2*cs_err[i] / (pow(cs[i],3));
+            y_new_err[i] = 2*yerr[i] / (pow(y[i],3));
         }
 
-        TGraphErrors* gnew = new TGraphErrors(dim, &volt[0], cs_negpow.data(), &volt_err[0], cs_negpow_err.data());   
+        TGraphErrors* gnew = new TGraphErrors(dim, &x[0], y_new.data(), &xerr[0], y_new_err.data());   
         gnew->SetName(Form("Channel %d", ch));
         gnew->SetTitle(Form("Channel %d;Voltage [V]; 1/C^{2} [1/pF^{2}]", ch));
         gnew->SetMarkerStyle(20);
@@ -297,12 +286,12 @@ int analyse_data_clean()
         gnew->GetYaxis()->CenterTitle();
 
         // first fit: left region
-        gnew->Fit("pol1", "Q0", "", volt[1], volt[6]);
+        gnew->Fit("pol1", "Q0", "", x[1], x[6]);
         TF1* don_fit = (TF1*)gnew->GetFunction("pol1")->Clone("don_fit");
         don_fit->SetLineColor(kRed);
         don_fit->SetLineWidth(2);
         don_fit->SetLineStyle(2); // dashed
-        don_fit->SetRange(volt[0], volt[8]);
+        don_fit->SetRange(x[0], x[8]);
         don_fit->Draw("SAME");
 
         // get donor density from slope of the fit
@@ -325,24 +314,14 @@ int analyse_data_clean()
         // gnew->Write();
         c2->Write();
 
+        //clean data vectors
+        x.clear();
+        y.clear();
+        yerr.clear();
+
+
     } // end of channel loop
 
-<<<<<<< HEAD
-    canv_map->cd();
-    hVdep_map->SetTitle("Depletion Voltage Map;X;Y");
-    hVdep_map->SetStats(0); // disable stats box
-    hVdep_map->Draw("COLZ"); // draw histogram with color palette
-
-    hVdepxch->Write();
-    hVdep->Write(); // write histogram with depletion voltages distribution
-    hndon->Write(); // write histogram with donor density distribution
-    canv_map->Write(); // write 2D histogram canvas
-
-
-
-    
-
-=======
     // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
     // depletion voltage
@@ -352,6 +331,8 @@ int analyse_data_clean()
     hVdep_map->Draw("COLZ");
     hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
     channel_name->Draw("text same");
+    cVdep->Update();
+
 
     // donnor density
     auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
@@ -361,6 +342,7 @@ int analyse_data_clean()
     hndon_map->Draw("COLZ");
     hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
     channel_name->Draw("text same");
+    cndon->Update();
 
     // capacitance
     auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
@@ -369,6 +351,7 @@ int analyse_data_clean()
     hcs_plateau_map->Draw("COLZ");
     hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
     channel_name->Draw("text same");
+    ccsplat->Update();
 
 
     // // Disable ticks and axis visuals
@@ -397,7 +380,6 @@ int analyse_data_clean()
     cVdep->Write();
     cndon->Write();
     ccsplat->Write();
->>>>>>> d03cddbc2f83fa9a270605e47fff0aea9d0b00ba
 
 
     return 0;
