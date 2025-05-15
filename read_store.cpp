@@ -8,9 +8,10 @@
 int read_store()
 {
     // read the data
-    std::ifstream data ("CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"); // open the file directly when initializing the stream object
+    std::ifstream data ("CALICE_6in_256ch_77_20250509_3_CV.txt"); // open the file directly when initializing the stream object
+    // std::ifstream data ("CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"); // open the file directly when initializing the stream object
     
-    std::vector<int> customChannels;
+    std::vector<int> customChannels; 
 
     if (data.is_open()) {
         std::string line;
@@ -26,8 +27,9 @@ int read_store()
                     // Extract everything after the colon
                     std::string channelsStr = line.substr(pos + 1);
 
-                    // Remove leading whitespace
-                    channelsStr.erase(0, channelsStr.find_first_not_of(" \t"));
+                    // Trim leading and trailing whitespace
+                    channelsStr.erase(0, channelsStr.find_first_not_of(" \t\r\n"));
+                    channelsStr.erase(channelsStr.find_last_not_of(" \t\r\n") + 1); 
 
                     if (channelsStr == "None") {
                         // If "None", that means all 256 channels are used
