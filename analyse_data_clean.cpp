@@ -61,9 +61,9 @@ int analyse_data_clean()
     // ------------------------------------Create histograms---------------------------------------------------
 
     // 1D histograms to store depletion voltages and donor density distributions
-    TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 8, 0, 8); // histogram to store depletion voltages per channel
-    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 10, 40, 60); // histogram to store depletion voltages distribution
-    TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 10, 1e+10, 2e+11); // histogram to store depletion voltages distribution
+    TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+    TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 80, 0, 200); // histogram to store depletion voltages distribution
+    TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 80, 1e+10, 1.1e+12); // histogram to store depletion voltages distribution
     
     // 2D histogram to store capacitance, depletion voltage and donor density of every channel
     auto hVdep_map = new TH2F("hVdep_map","Sensor pixels;X;Y",
@@ -86,6 +86,10 @@ int analyse_data_clean()
     // --------------------Open file to store graphs, fits and histograms-------------------
 
     std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+    // Create directories
+    TDirectory* dirCV = myFile->mkdir("CV_graphs");
+    TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
+    TDirectory* dirDonnor = myFile->mkdir("Donnor_density");
 
     //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
@@ -223,12 +227,12 @@ int analyse_data_clean()
         g->Fit(rfit2, "QR0");
 
         double p0_3 = rfit2->GetParameter(0);
-        cout << "fit to log scale: " << std::exp(p0_2) << std::endl << "fit to linear scale: " << p0_3 << std::endl;
+        // cout << "fit to log scale: " << std::exp(p0_2) << std::endl << "fit to linear scale: " << p0_3 << std::endl;
 
 
 
         // store depletion voltage in histograms
-        hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
+        // hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
         hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
         hVdep->Fill(V_dep); // fill histogram with depletion voltage
         hVdep_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
@@ -320,10 +324,16 @@ int analyse_data_clean()
 
         // save the graphs
         //g->SaveAs("CV_graph.png");
+
+        dirCV->cd();
         g->Write();
+
+        dirDepletion->cd();
         c1->Write(); // log scale graph and fit in the same canvas
         // glog->Write(); // justs log scale graph
         // gnew->Write();
+
+        dirDonnor->cd();
         c2->Write();
 
         //clean data vectors
@@ -386,6 +396,7 @@ int analyse_data_clean()
 
     // gPad->Update();
 
+    myFile->cd(); 
     hVdepxch->Write(); // write histogram with depletion voltages per channel
     hVdep->Write(); // write histogram with depletion voltages distribution
     hndon->Write(); // write histogram with donor density distribution
