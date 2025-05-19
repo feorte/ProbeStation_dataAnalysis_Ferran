@@ -52,10 +52,10 @@ int read_store()
                     } else {
                         // Otherwise, parse the comma-separated list of custom channels
                         std::stringstream ss(channelsStr);
-                        std::string channel;
+                        std::string used_channels;
 
-                        while (std::getline(ss, channel, ',')) {
-                            int ch = std::stoi(channel); // convert string to int
+                        while (std::getline(ss, used_channels, ',')) {
+                            int ch = std::stoi(used_channels); // convert string to int
                             customChannels.push_back(ch);
                         }
                     }
@@ -169,7 +169,8 @@ int read_store()
     
                     // Fill measurements into the tree
                     raw_measurements->Fill();
-    
+                    analysis->Fill();
+
                     current_anl[i] = current;
                     current_err_anl[i] = current_err;
                     tot_curr_anl[i] = tot_curr;
@@ -178,6 +179,7 @@ int read_store()
                     temp_anl[i] = temp;
                     hum_anl[i] = hum;
                 }  
+                if (!success) break;
             }      
 
         } else if (measurementType == "CV") {
@@ -258,7 +260,8 @@ int read_store()
     
                     // Fill measurements into the tree
                     raw_measurements->Fill();
-    
+                    analysis->Fill();
+
                     cs_anl[i] = cs;
                     cs_err_anl[i] = cs_err;
                     tot_curr_anl[i] = tot_curr;
