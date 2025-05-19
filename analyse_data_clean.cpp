@@ -85,7 +85,7 @@ int analyse_data_clean()
 
     // --------------------Open file to store graphs, fits and histograms-------------------
 
-    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs.root", "RECREATE") );
+    std::unique_ptr<TFile> myFile( TFile::Open("CV_graphs_20.root", "RECREATE") );
     // Create directories
     TDirectory* dirCV = myFile->mkdir("CV_graphs");
     TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");

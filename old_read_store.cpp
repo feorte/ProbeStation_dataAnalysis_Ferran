@@ -8,8 +8,9 @@
 int old_read_store()
 {
     // read the data
-    std::ifstream data ("CALICE_6in_256ch_77_20250509_3_CV.txt"); // open the file directly when initializing the stream object
-    // std::ifstream data ("CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"); // open the file directly when initializing the stream object
+    string filename = "CALICE_6in_256ch_20_20250516_0_CV.txt"; // replace with your file name
+    std::ifstream data (filename); // open the file directly when initializing the stream object
+    cout<<"Reading file: " << filename << endl;
     
     std::vector<int> customChannels; 
 
