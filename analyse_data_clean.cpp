@@ -66,11 +66,11 @@ int analyse_data_clean()
     TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, 3e+10, 2e+11); // histogram to store depletion voltages distribution
     
     // 2D histogram to store capacitance, depletion voltage and donor density of every channel
-    auto hVdep_map = new TH2F("hVdep_map","Sensor pixels;X;Y",
+    auto hVdep_map = new TH2F("hVdep_map","Depletion Voltage;X;Y",
         16,0.5,16.5,  // X axis
         16,0.5,16.5); // Y axis
-    auto hndon_map = new TH2F("hndon_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-    auto hcs_plateau_map = new TH2F("hcs_plateau_map","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+    auto hndon_map = new TH2F("hndon_map","Donnor density;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+    auto hcs_plateau_map = new TH2F("hcs_plateau_map","High voltage capacitance;X;Y", 16,0.5,16.5, 16,0.5,16.5);
 
 
     //2D histogram that maps channels to positions on the sensor
@@ -348,8 +348,8 @@ int analyse_data_clean()
 
     // depletion voltage
     auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
-    gStyle->SetPalette(58);
-    hVdep_map->SetContour(99);
+    // gStyle->SetPalette(58);
+    // hVdep_map->SetContour(99);
     hVdep_map->SetMinimum(17);
     hVdep_map->SetMaximum(80);
     hVdep_map->Draw("COLZ");
@@ -361,8 +361,8 @@ int analyse_data_clean()
     // donnor density
     auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
     cndon->cd();
-    gStyle->SetPalette(58);
-    hndon_map->SetContour(99);
+    // gStyle->SetPalette(58);
+    // hndon_map->SetContour(99);
     hndon_map->SetMinimum(3e+10);
     hndon_map->SetMaximum(2e+11);
     hndon_map->Draw("COLZ");
@@ -372,8 +372,8 @@ int analyse_data_clean()
 
     // capacitance
     auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
-    gStyle->SetPalette(58);
-    hcs_plateau_map->SetContour(99);
+    // gStyle->SetPalette(58);
+    // hcs_plateau_map->SetContour(99);
     // hcs_plateau_map->SetMinimum(zmin);
     // hcs_plateau_map->SetMaximum(zmax);
     hcs_plateau_map->Draw("COLZ");
