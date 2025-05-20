@@ -33,8 +33,8 @@ int old_read_store()
                     channelsStr.erase(channelsStr.find_last_not_of(" \t\r\n") + 1); 
 
                     if (channelsStr == "None") {
-                        // If "None", that means all 256 channels are used
-                        for (int ch = 1; ch <= 256; ++ch) {
+                        // If "None", that means all 264 channels are used
+                        for (int ch = 1; ch <= 264; ++ch) {
                             customChannels.push_back(ch);
                         }
                     } else {
@@ -198,13 +198,14 @@ int old_read_store()
             for (int i=0; i<n_ch; i++) { 
                 // read the tabular data
                 // the data is separated by tabs, so we can use >> to read it
+                
                 if (!(data >> voltage >> channel >> cs >> cs_err >> tot_curr >> act_vlt 
                     >> time >> temp >> hum >> cp >> cp_err >> impedance >> impedance_err 
                     >> phase >> phase_err >> cs_uncorr >> cp_uncorr)) {
                   success = false;
-                  break;
-              }
-
+                  break;  
+                } 
+                
                 // Fill measurements into the tree
                 raw_measurements->Fill();
 
@@ -223,9 +224,16 @@ int old_read_store()
                 phase_err_anl[i] = phase_err;
                 cs_uncorr_anl[i] = cs_uncorr;
                 cp_uncorr_anl[i] = cp_uncorr;
+
+                // if (voltage==140){
+                //     std::cout << "Cs " << channel << ": " << cs << std::endl;
+                //     cout << "cs vector:" << cs_anl[i] << endl;
+                // }
+
             }
 
             if (!success) break;
+
 
             // calculate the mean and standard deviation for temperature and humidity
             mean_temp = 0;
