@@ -8,9 +8,9 @@
 int read_store()
 {
     // read the data
-    string filename = "raw_data/CALICE_6in_256ch_77_20250221_1_IV_customscan.txt"; // replace with your file name
-    std::ifstream data (filename); // open the file directly when initializing the stream object
-    cout<<"Reading file: " << filename << endl;
+    string datafile = "raw_data/CALICE_6in_256ch_77_20250221_1_IV_customscan.txt"; // replace with your file name
+    std::ifstream data (datafile); // open the file directly when initializing the stream object
+    cout<<"Reading file: " << datafile << endl;
     
     std::vector<int> customChannels; 
     std::string measurementType;
@@ -75,8 +75,12 @@ int read_store()
 
         // folder to store procesesd data files
         std::filesystem::create_directories("stored_data");
-        // create the storing file and a tree to store the data
-        std::unique_ptr<TFile> myFile( TFile::Open("stored_data/stored_data.root", "RECREATE") );
+
+        // create the storing file
+        std::string storingfile = "stored_data/stored_data_" + measurementType + ".root";
+        std::unique_ptr<TFile> myFile(TFile::Open(storingfile.c_str(), "RECREATE"));
+
+        // tree to store the data
         auto raw_measurements = std::make_unique<TTree>("raw_measurements", "Raw measurements");
 
         // create the tree for the analysis
@@ -123,29 +127,6 @@ int read_store()
             float hum;
             raw_measurements->Branch("hum", &hum);
 
-            float cp;
-            raw_measurements->Branch("cp", &cp);
-
-            float cp_err;
-            raw_measurements->Branch("cp_err", &cp_err);
-
-            float impedance;
-            raw_measurements->Branch("impedance", &impedance);
-
-            float impedance_err;
-            raw_measurements->Branch("impedance_err", &impedance_err);
-
-            float phase;
-            raw_measurements->Branch("phase", &phase);
-
-            float phase_err;
-            raw_measurements->Branch("phase_err", &phase_err);
-
-            float cs_uncorr;
-            raw_measurements->Branch("cs_uncorr", &cs_uncorr); //uncorrected
-
-            float cp_uncorr;
-            raw_measurements->Branch("cp_uncorr", &cp_uncorr);
 
             // define annalysis branches;
             analysis->Branch("voltage", &voltage);
@@ -172,30 +153,6 @@ int read_store()
 
             std::vector<float> hum_anl(n_ch);
             analysis->Branch("hum", &hum_anl);
-
-            std::vector<float> cp_anl(n_ch);
-            analysis->Branch("cp", &cp_anl);
-
-            std::vector<float> cp_err_anl(n_ch);
-            analysis->Branch("cp_err", &cp_err_anl);
-
-            std::vector<float> impedance_anl(n_ch);
-            analysis->Branch("impedance", &impedance_anl);
-
-            std::vector<float> impedance_err_anl(n_ch);
-            analysis->Branch("impedance_err", &impedance_err_anl);
-
-            std::vector<float> phase_anl(n_ch);
-            analysis->Branch("phase", &phase_anl);
-
-            std::vector<float> phase_err_anl(n_ch);
-            analysis->Branch("phase_err", &phase_err_anl);
-
-            std::vector<float> cs_uncorr_anl(n_ch);
-            analysis->Branch("cs_uncorr", &cs_uncorr_anl); // uncorrected
-
-            std::vector<float> cp_uncorr_anl(n_ch);
-            analysis->Branch("cp_uncorr", &cp_uncorr_anl);
 
             // mean values for the temperature and humidity in one voltage
             float mean_temp;
@@ -284,6 +241,7 @@ int read_store()
         else if (measurementType == "CV") {
             std::cout << "Processing CV data...\n";
             
+            // define storage branches;
             float voltage;
             raw_measurements->Branch("voltage", &voltage);
 
@@ -335,11 +293,7 @@ int read_store()
             float cp_uncorr;
             raw_measurements->Branch("cp_uncorr", &cp_uncorr);
 
-
-            // create the tree for the analysis
-            auto analysis = std::make_unique<TTree>("analysis", "Analysis");
-
-            // define the branches;
+            // define the branches for the analysis tree
             analysis->Branch("voltage", &voltage);
 
             analysis->Branch("channel", &customChannels);
