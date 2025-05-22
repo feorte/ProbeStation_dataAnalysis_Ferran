@@ -60,8 +60,10 @@ int read_store()
 
         int n_ch = customChannels.size(); // number of channels
 
+        // folder to store procesesd data files
+        std::filesystem::create_directories("stored_data");
         // create the storing file and a tree to store the data
-        std::unique_ptr<TFile> myFile( TFile::Open("stored_data.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("stored_data/stored_data.root", "RECREATE") );
         auto raw_measurements = std::make_unique<TTree>("raw_measurements", "Raw measurements");
 
         // add branches 

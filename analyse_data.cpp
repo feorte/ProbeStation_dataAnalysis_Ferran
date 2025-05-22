@@ -22,7 +22,7 @@ int analyse_data()
     // ------------------------------------Load data from tree---------------------------------------------------
 
     // Load ROOT file and tree safely
-    auto file = std::unique_ptr<TFile>(TFile::Open("stored_data.root"));
+    auto file = std::unique_ptr<TFile>(TFile::Open("stored_data/stored_data.root"));
     if (!file || file->IsZombie()) {
         std::cerr << "Error: Cannot open ROOT file.\n";
         return -1;
