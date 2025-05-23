@@ -17,12 +17,37 @@ const float eps = epsSi * eps0; // permittivity of silicon in F/m
 const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
 
+int CVorIV(std::string filename) {
+    // Check the file extension to determine if it's CV or IV
+    if (filename.size() >= 6) {
+        std::string ending = filename.substr(filename.size() - 7); // get last 6 chars
+
+        if (ending == "CV.root") {
+            std::cout << "File is CV type." << std::endl;
+            return 1; // CV type
+        } else if (ending == "IV.root") {
+            std::cout << "File is IV type." << std::endl;
+            return 0; // IV type
+        } else {
+            std::cerr << "Error: Unknown file type." << std::endl;
+            return -1;
+        }
+    } else {
+        std::cerr << "Error: Filename is too short to determine type." << std::endl;
+        return -1;
+    }
+}
+
+
+
 int analyse_data()
 {
     // ------------------------------------Load data from tree---------------------------------------------------
 
-    // Load ROOT file and tree safely
     std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
+
+
+    // Load ROOT file and tree safely
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
         std::cerr << "Error: Cannot open ROOT file.\n";
@@ -35,26 +60,10 @@ int analyse_data()
         return -1;
     }
 
-
-    bool isCV = false;
-    //----------------------------------Determine IV or CV type----------------------------------
-    if (storingfile.size() >= 6) {
-        std::string ending = storingfile.substr(storingfile.size() - 7); // get last 6 chars
-
-        if (ending == "CV.root") {
-            std::cout << "File is CV type." << std::endl;
-            isCV = true;
-
-
-        } else if (ending == "IV.root") {
-            std::cout << "File is IV type." << std::endl;
-            // Your IV handling code here
-        } else {
-            std::cout << "File is of unknown type." << std::endl;
-            return -1;
-        }
-    } else {
-        std::cout << "Filename is too short to determine type." << std::endl;
+    // Check if the file is CV or IV type
+    int isCV = CVorIV(storingfile); // 1 for CV, 0 for IV, -1 for error
+    if (isCV == -1) {
+        return -1;
     }
 
     // ------------------------------------Get necessary branches---------------------------------------------------
