@@ -22,7 +22,7 @@ int analyse_data()
     // ------------------------------------Load data from tree---------------------------------------------------
 
     // Load ROOT file and tree safely
-    std::string storingfile = "stored_data/stored_data_IV.root"; // replace with your file name
+    std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
         std::cerr << "Error: Cannot open ROOT file.\n";
@@ -88,7 +88,7 @@ int analyse_data()
         // 1D histograms to store depletion voltages and donor density distributions
         TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 50, 17, 80); // histogram to store depletion voltages distribution
-        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, 3e+10, 2e+11); // histogram to store depletion voltages distribution
+        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, 3e+10, 4e+11); // histogram to store depletion voltages distribution
 
         // 2D histogram to store capacitance, depletion voltage and donor density of every channel
         auto hVdep_map = new TH2F("hVdep_map","Depletion Voltage;X;Y",
@@ -430,7 +430,7 @@ int analyse_data()
         // gStyle->SetPalette(58);
         // hndon_map->SetContour(99);
         hndon_map->SetMinimum(3e+10);
-        hndon_map->SetMaximum(2e+11);
+        hndon_map->SetMaximum(4e+11);
         hndon_map->Draw("COLZ");
         hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
         channel_name->Draw("text same");

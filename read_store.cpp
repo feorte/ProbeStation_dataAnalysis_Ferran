@@ -8,7 +8,7 @@
 int read_store()
 {
     // read the data
-    string datafile = "raw_data/CALICE_6in_256ch_77_20250221_1_CV_customscan.txt"; // replace with your file name
+    string datafile = "raw_data/CALICE_6in_256ch_20_20250516_0_CV.txt"; // replace with your file name
     std::ifstream data (datafile); // open the file directly when initializing the stream object
     cout<<"Reading file: " << datafile << endl;
     
