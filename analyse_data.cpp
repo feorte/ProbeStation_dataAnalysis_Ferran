@@ -50,14 +50,24 @@ void choose_branches(TTree* tree, const std::vector<std::string>& branches) {
     }
 }
 
+void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vector<float> yerr,
+               std::vector<float>& x_log, std::vector<float>& y_log, std::vector<float>& yerr_log) {
+    for (int i = 0; i < n_volt; ++i) {
+        x_log[i] = std::log(x[i]);
+        y_log[i] = std::log(y[i]);
 
+
+        // error propagation formula for log(x): simga_log(x) = sigma_x / x
+        yerr_log[i] = yerr[i] / y[i];
+        //xerr_log[i] = xerr[i] / x[i]; // still, al 0s
+    }
+}
 
 int analyse_data()
 {
     // ------------------------------------Load data from tree---------------------------------------------------
 
-    std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
-
+    std::string storingfile = "stored_data/stored_data_IV.root"; // replace with your file name
 
     // Load ROOT file
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
@@ -132,78 +142,36 @@ int analyse_data()
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
         TDirectory* dirDonnor = myFile->mkdir("Donnor_density");
 
-        //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
+        // ---------------------Get how many different voltages an channels were tested---------------------
+
+        int n_volt=0; //number of different voltages tested
+        int n_ch=0; //number of different voltages tested
+
+        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            // load the data for the given tree entry
+            tree->GetEntry(iEntry);
+            n_volt=iEntry+1;
+        }
+        n_ch = channel->size();
+        cout<<"Number of channels: " << n_ch << endl;
 
         // define variables for the CV graph
         std::vector<float> x ;
         std::vector<float> y ;
         std::vector<float> yerr ;
 
-        // ---------------------Get how many different voltages an channels were tested---------------------
-
-        int n_volt=0; //number of different voltages tested
-        int n_ch=0; //number of different voltages tested
-
-            for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
-                // load the data for the given tree entry
-                tree->GetEntry(iEntry);
-                n_volt=iEntry+1;
-            }
-        // n_ch = channel->sizek();
-        n_ch = channel->size();
-        cout<<"Number of channels: " << n_ch << endl;
-
-
-        // for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
-
-        //     //------------------------------------Load all data from given channel----------------------------------------
-
-        //     int dim=0; //number of different voltages tested
-        //     for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
-        //         // load the data for the given tree entry
-        //         tree->GetEntry(iEntry);
-
-        //         // fill variables for the CV graph
-        //         x.push_back(voltage);
-        //         y.push_back(cs->at(indx));
-        //         yerr.push_back(cs_err->at(indx));
-
-        //         if (voltage==140){
-        //             std::cout << "Cs " << channel->at(indx) << ": " << cs->at(indx) << std::endl;
-        //           }
-
-        //         dim=iEntry+1;
-        //     }
-
-        //     // which channel analysing
-        //     int ch = channel->at(indx);
-        //     printf("Channel: %d\n", ch);
+       //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
 
-            //------------------------------------Load all data from given channel----------------------------------------
-
-            int dim=0; //number of different voltages tested
             for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
                 // load the data for the given tree entry
                 tree->GetEntry(iEntry);
-
+        
                 // fill variables for the CV graph
                 x.push_back(voltage);
-                
-                ULong_t ncs = cs->size();
-                float *cs_val = cs->data();
-                y.push_back(cs_val[indx]);
-
-                ULong_t ncserr = cs_err->size();
-                float *cs_err_val = cs_err->data();
-                yerr.push_back(cs_err_val[indx]);
-
-                if (voltage==140){
-                    std::cout << "Cs " << channel->at(indx) << ": " << cs_val[indx] << std::endl;
-                }
-
-                dim=iEntry+1;
+                y.push_back(cs->at(indx));
+                yerr.push_back(cs_err->at(indx));
             }
 
             // which channel analysing
@@ -211,8 +179,8 @@ int analyse_data()
             printf("Channel: %d\n", ch);
 
             // -------------------CV GRAPH--------------------
-            std::vector<float> xerr(dim, 0); // no error on x-axis
-            TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
+            std::vector<float> xerr(n_volt, 0); // no error on x-axis
+            TGraph *g = new TGraphErrors(n_volt, &x[0], &y[0], &xerr[0], &yerr[0]);
             g->SetName(Form("Channel %d", ch));
             g->SetTitle(Form("Channel %d;Voltage [V]; Capacitance [pF]", ch));
             g->SetMarkerStyle(20);
@@ -224,19 +192,12 @@ int analyse_data()
 
             // -------------------CV GRAPH: log scale for depletion voltage--------------------
             // first create new vectors to hold the log-transformed data and the propagated errors:
-            std::vector<float> x_log(dim), y_log(dim);
-            std::vector<float> xerr_log(dim), yerr_log(dim);
+            std::vector<float> x_log(n_volt), y_log(n_volt);
+            std::vector<float> yerr_log(n_volt);
 
-            for (int i = 0; i < dim; ++i) {
-                x_log[i] = std::log(x[i]);
-                y_log[i] = std::log(y[i]);
+            log_scale(n_volt, x, y, yerr, x_log, y_log, yerr_log);// modifies log variables
 
-                // error propagation formula for log(x): simga_log(x) = sigma_x / x
-                //xerr_log[i] = xerr[i] / x[i]; // still, al 0s
-                yerr_log[i] = yerr[i] / y[i];
-            }
-
-            TGraphErrors* glog = new TGraphErrors(dim, x_log.data(), y_log.data(), &xerr[0], yerr_log.data());
+            TGraphErrors* glog = new TGraphErrors(n_volt, x_log.data(), y_log.data(), &xerr[0], yerr_log.data());
             glog->SetName(Form("Channel %d log scale", ch));
             glog->SetTitle(Form("Channel %d log scale;ln V; ln C", ch));
             glog->SetMarkerStyle(20);
@@ -249,7 +210,6 @@ int analyse_data()
             c1->SetTicks();
             c1->SetLeftMargin(0.15);
             c1->SetBottomMargin(0.15);
-
             // draw graph
             glog->SetMarkerStyle(20);
             glog->SetMarkerSize(0.8);
@@ -263,7 +223,6 @@ int analyse_data()
             glog->GetXaxis()->SetTitleOffset(1.2);
             glog->GetYaxis()->SetTitleOffset(1.4);
             glog->Draw("AP"); // important: "AP" to redraw axis properly
-
             glog->GetXaxis()->CenterTitle();
             glog->GetYaxis()->CenterTitle();
 
@@ -279,7 +238,7 @@ int analyse_data()
             lfit->Draw("SAME");
 
             // second fit: right region (horizontal line)
-            TF1* rfit = new TF1("rfit", "pol0", x_log[dim-6], x_log[dim-1]);
+            TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-6], x_log[n_volt-1]);
             glog->Fit(rfit, "QR0");
             rfit->SetLineColor(kGreen+3);
             rfit->SetLineWidth(2);
@@ -301,14 +260,12 @@ int analyse_data()
                         , ((ch-1)/16)+1 // Y position
                         , std::exp(p0_2)); // value of constant line in V
 
-            // lets try to do the fit directly on CV (no log scale)
-            TF1* rfit2 = new TF1("rfit2", "pol0", x[dim-6], x[dim-1]);
-            g->Fit(rfit2, "QR0");
+            // // lets try to do the fit directly on CV (no log scale)
+            // TF1* rfit2 = new TF1("rfit2", "pol0", x[n_volt-6], x[n_volt-1]);
+            // g->Fit(rfit2, "QR0");
 
-            double p0_3 = rfit2->GetParameter(0);
+            // double p0_3 = rfit2->GetParameter(0);
             // cout << "fit to log scale: " << std::exp(p0_2) << std::endl << "fit to linear scale: " << p0_3 << std::endl;
-
-
 
             // store depletion voltage in histograms
             // hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
@@ -338,18 +295,18 @@ int analyse_data()
 
             //----------------------Donnor density-------------------------
 
-            std::vector<float> y_new(dim);
-            std::vector<float> y_new_err(dim);
+            std::vector<float> y_new(n_volt);
+            std::vector<float> y_new_err(n_volt);
 
             // calculate 1/cs^2
-            for (int i = 0; i < dim; ++i) {
+            for (int i = 0; i < n_volt; ++i) {
                 y_new[i] = std::pow(y[i], -2);
 
                 // error propagation formula for x^{-2}: simga_x^{-2} = 2*sigma_x / (x^3)
                 y_new_err[i] = 2*yerr[i] / (pow(y[i],3));
             }
 
-            TGraphErrors* gnew = new TGraphErrors(dim, &x[0], y_new.data(), &xerr[0], y_new_err.data());
+            TGraphErrors* gnew = new TGraphErrors(n_volt, &x[0], y_new.data(), &xerr[0], y_new_err.data());
             gnew->SetName(Form("Channel %d", ch));
             gnew->SetTitle(Form("Channel %d;Voltage [V]; 1/C^{2} [1/pF^{2}]", ch));
             gnew->SetMarkerStyle(20);
@@ -401,16 +358,11 @@ int analyse_data()
                             , ((ch-1)/16)+1 // Y position
                             , donor_density); // fill 2D histogram with depletion voltage
 
-            // save the graphs
-            //g->SaveAs("CV_graph.png");
-
             dirCV->cd();
             g->Write();
 
             dirDepletion->cd();
             c1->Write(); // log scale graph and fit in the same canvas
-            // glog->Write(); // justs log scale graph
-            // gnew->Write();
 
             dirDonnor->cd();
             c2->Write();
@@ -419,8 +371,6 @@ int analyse_data()
             x.clear();
             y.clear();
             yerr.clear();
-
-
         } // end of channel loop
 
         // ------------------------------------Create 2D map of sensor---------------------------------------------------
@@ -493,39 +443,18 @@ int analyse_data()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
     else {
         cout << "Processing IV data...\n";
         // Enable only required branches
         const std::vector<std::string> branches = {"voltage", "channel", "current", "current_err"};
-        tree->SetBranchStatus("*", false);
-        for (const auto& name : branches) {
-            if (tree->GetBranch(name.c_str())) {
-                tree->SetBranchStatus(name.c_str(), true);
-            } else {
-                std::cerr << "Warning: Branch '" << name << "' not found in the tree." << std::endl;
-            }
-        }
+        choose_branches(tree, branches);
 
         // Bind branches to variables
         float voltage = 0.0f;
         std::vector<int>* channel = 0;
         std::vector<float>* current = 0;
         std::vector<float>* current_err = 0;
-
         tree->SetBranchAddress("voltage", &voltage);
         tree->SetBranchAddress("channel", &channel);
         tree->SetBranchAddress("current", &current);
@@ -547,35 +476,26 @@ int analyse_data()
 
         // ---------------------Get how many different voltages an channels were tested---------------------
 
-        int n_ch=0; //number of different voltages tested
-
-            for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
-                // load the data for the given tree entry
-                tree->GetEntry(iEntry);
-            }
-        // n_ch = channel->sizek();
+        int n_volt=0; //number of different voltages tested
+        int n_ch; //number of different voltages tested
+        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            // load the data for the given tree entry
+            tree->GetEntry(iEntry);
+            n_volt=iEntry+1;
+        }
         n_ch = channel->size();
         cout<<"Number of channels: " << n_ch << endl;
-
+        
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
 
             //------------------------------------Load all data from given channel----------------------------------------
-
-            int dim=0; //number of different voltages tested
             for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
                 // load the data for the given tree entry
                 tree->GetEntry(iEntry);
-
                 // fill variables for the CV graph
                 x.push_back(voltage);
-                
-                float *current_val = current->data();
-                y.push_back(current_val[indx]);
-
-                float *current_err_val = current_err->data();
-                yerr.push_back(current_err_val[indx]);
-
-                dim=iEntry+1;
+                y.push_back(current->at(indx));
+                yerr.push_back(current_err->at(indx));
             }
 
             // which channel analysing
@@ -583,8 +503,8 @@ int analyse_data()
             printf("Channel: %d\n", ch);
 
             // -------------------CV GRAPH--------------------
-            std::vector<float> xerr(dim, 0); // no error on x-axis
-            TGraph *g = new TGraphErrors(dim, &x[0], &y[0], &xerr[0], &yerr[0]);
+            std::vector<float> xerr(n_volt, 0); // no error on x-axis
+            TGraph *g = new TGraphErrors(n_volt, &x[0], &y[0], &xerr[0], &yerr[0]);
             g->SetName(Form("Channel %d", ch));
             g->SetTitle(Form("Channel %d;Voltage [V]; Current [nA]", ch));
             g->SetMarkerStyle(20);
@@ -603,9 +523,6 @@ int analyse_data()
             yerr.clear();
         }    
     }
-
-
-
 
     return 0;
 }
