@@ -92,7 +92,6 @@ int analyse_data()
         std::vector<int>* channel = 0;
         std::vector<float>* cs = 0;
         std::vector<float>* cs_err = 0;
-
         tree->SetBranchAddress("voltage", &voltage);
         tree->SetBranchAddress("channel", &channel);
         tree->SetBranchAddress("cs", &cs);
@@ -115,8 +114,7 @@ int analyse_data()
 
         //2D histogram that maps channels to positions on the sensor
         auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-
-        // fill 2D histogram with channel numbers
+        // fill it with channel numbers
         for (int i = 1; i < 17; ++i) {
             for (int j = 1; j < 17; ++j) {
                 channel_name->Fill(i, j, i+16*(j-1));
@@ -549,13 +547,11 @@ int analyse_data()
 
         // ---------------------Get how many different voltages an channels were tested---------------------
 
-        int n_volt=0; //number of different voltages tested
         int n_ch=0; //number of different voltages tested
 
             for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
                 // load the data for the given tree entry
                 tree->GetEntry(iEntry);
-                n_volt=iEntry+1;
             }
         // n_ch = channel->sizek();
         n_ch = channel->size();

@@ -357,9 +357,6 @@ int read_store()
             float std_hum;
             analysis->Branch("std_hum", &std_hum);
 
-
-            float dummy; // to jump over columns we don't want to store 
-
             while (true){
                 bool success = true;
 
@@ -392,11 +389,6 @@ int read_store()
                     phase_err_anl[i] = phase_err;
                     cs_uncorr_anl[i] = cs_uncorr;
                     cp_uncorr_anl[i] = cp_uncorr;
-
-                    // if (voltage==140){
-                    //     std::cout << "Cs " << channel << ": " << cs << std::endl;
-                    //     cout << "cs vector:" << cs_anl[i] << endl;
-                    // }
 
                 }
 
