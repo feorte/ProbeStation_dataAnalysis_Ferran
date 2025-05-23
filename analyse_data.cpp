@@ -20,7 +20,7 @@ const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5
 int CVorIV(std::string filename) {
     // Check the file extension to determine if it's CV or IV
     if (filename.size() >= 6) {
-        std::string ending = filename.substr(filename.size() - 7); // get last 6 chars
+        std::string ending = filename.substr(filename.size() - 7); // get last 7 chars
 
         if (ending == "CV.root") {
             std::cout << "File is CV type." << std::endl;
@@ -38,6 +38,18 @@ int CVorIV(std::string filename) {
     }
 }
 
+void choose_branches(TTree* tree, const std::vector<std::string>& branches) {
+    // Enable only required branches
+    tree->SetBranchStatus("*", false);
+    for (const auto& name : branches) {
+        if (tree->GetBranch(name.c_str())) {
+            tree->SetBranchStatus(name.c_str(), true);
+        } else {
+            std::cerr << "Warning: Branch '" << name << "' not found in the tree." << std::endl;
+        }
+    }
+}
+
 
 
 int analyse_data()
@@ -47,13 +59,14 @@ int analyse_data()
     std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
 
-    // Load ROOT file and tree safely
+    // Load ROOT file
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
         std::cerr << "Error: Cannot open ROOT file.\n";
         return -1;
     }
 
+    // Load tree from file
     auto tree = file->Get<TTree>("analysis");
     if (!tree) {
         std::cerr << "Error: Tree 'analysis' not found in the file.\n";
@@ -72,14 +85,7 @@ int analyse_data()
         cout << "Processing CV data...\n";
         // Enable only required branches
         const std::vector<std::string> branches = {"voltage", "channel", "cs", "cs_err"};
-        tree->SetBranchStatus("*", false);
-        for (const auto& name : branches) {
-            if (tree->GetBranch(name.c_str())) {
-                tree->SetBranchStatus(name.c_str(), true);
-            } else {
-                std::cerr << "Warning: Branch '" << name << "' not found in the tree." << std::endl;
-            }
-        }
+        choose_branches(tree, branches);
 
         // Bind branches to variables
         float voltage = 0.0f;
