@@ -63,6 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
     }
 }
 
+
 int analyse_data()
 {
     // ------------------------------------Load data from tree---------------------------------------------------
@@ -136,7 +137,7 @@ int analyse_data()
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_graphs_20_CV.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_graphs_CSIS2025_001_IV.root", "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirCV = myFile->mkdir("CV_graphs");
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
@@ -323,7 +324,7 @@ int analyse_data()
             // draw graph
             gnew->SetMarkerStyle(20);
             gnew->SetMarkerSize(0.8);
-            gnew->SetMarkerColor(kBlue+2);
+            gnew->SetMarkerColor(kBlue+2);  
             gnew->GetXaxis()->SetTitleFont(42);
             gnew->GetYaxis()->SetTitleFont(42);
             gnew->GetXaxis()->SetLabelFont(42);
@@ -376,71 +377,52 @@ int analyse_data()
         // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
         // depletion voltage
+        gStyle->SetPalette(60); // Set default palette
         auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
-        // gStyle->SetPalette(58);
-        // hVdep_map->SetContour(99);
-        hVdep_map->SetMinimum(17);
-        hVdep_map->SetMaximum(80);
+        cVdep->cd();
+        hVdep_map->SetMinimum(43);
+        hVdep_map->SetMaximum(58);
         hVdep_map->Draw("COLZ");
         hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
         channel_name->Draw("text same");
-        cVdep->Update();
+        gPad->Modified();
+        gPad->Update();
 
-
-        // donnor density
+        // donor density
+        gStyle->SetPalette(60); // Set default palette
         auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
         cndon->cd();
-        // gStyle->SetPalette(58);
-        // hndon_map->SetContour(99);
-        hndon_map->SetMinimum(3e+10);
-        hndon_map->SetMaximum(4e+11);
+        hndon_map->SetMinimum(1.9e+11);
+        hndon_map->SetMaximum(2.6e+11);
         hndon_map->Draw("COLZ");
         hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
         channel_name->Draw("text same");
-        cndon->Update();
+        gPad->Modified();
+        gPad->Update();
 
         // capacitance
+        gStyle->SetPalette(60); // Set default palette
         auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
-        // gStyle->SetPalette(58);
-        // hcs_plateau_map->SetContour(99);
-        // hcs_plateau_map->SetMinimum(zmin);
-        // hcs_plateau_map->SetMaximum(zmax);
+        ccsplat->cd();
+        // hcs_plateau_map->SetMinimum(5.5);
+        // hcs_plateau_map->SetMaximum(6.5);
+        hcs_plateau_map->SetMinimum(5.4);
+        hcs_plateau_map->SetMaximum(6);
         hcs_plateau_map->Draw("COLZ");
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
         channel_name->Draw("text same");
-        ccsplat->Update();
-
-
-        // // Disable ticks and axis visuals
-        // gPad->SetTicks(0, 0);
-        // gPad->SetFrameLineWidth(0);     // Frame box thickness
-        // gPad->SetFrameBorderMode(0);    // No border
-        // gPad->SetBorderMode(0);         // Canvas border
-
-        // // Hide axis labels, titles, divisions
-        // channel_name->GetXaxis()->SetLabelSize(0);
-        // channel_name->GetYaxis()->SetLabelSize(0);
-        // channel_name->GetXaxis()->SetTitle("");
-        // channel_name->GetYaxis()->SetTitle("");
-        // channel_name->GetXaxis()->SetNdivisions(0);
-        // channel_name->GetYaxis()->SetNdivisions(0);
-
-        // // Set axis line and tick widths to 0
-        // channel_name->GetXaxis()->SetAxisColor(0);
-        // channel_name->GetYaxis()->SetAxisColor(0);
-
-        // gPad->Update();
+        gPad->Modified();
+        gPad->Update();
 
         myFile->cd();
         hVdepxch->Write(); // write histogram with depletion voltages per channel
-        hVdep->Write(); // write histogram with depletion voltages distribution
+        hVdep->Write(); // write histogram with depletiozn voltages distribution
         hndon->Write(); // write histogram with donor density distribution
         cVdep->Write();
         cndon->Write();
         ccsplat->Write();
     } // end isCV
-
-
+    
 
 
     
