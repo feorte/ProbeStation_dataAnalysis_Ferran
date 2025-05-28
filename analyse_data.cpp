@@ -8,6 +8,7 @@
 #include "TGraphErrors.h"
 gROOT->SetBatch(kTRUE); // Disable graphics
 gStyle->SetOptStat(0); // Disable statistics box
+gStyle->SetPalette(kBlueRedYellow); // Set default color palette
 
 // used values/constants
 const float e = 1.602176634e-19; // charge of an electron in C
@@ -66,6 +67,8 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 
 int analyse_data()
 {
+    gStyle->SetPalette(kBlueRedYellow); // Set default color palette
+
     // ------------------------------------Load data from tree---------------------------------------------------
 
     std::string storingfile = "stored_data/stored_data_IV.root"; // replace with your file name
@@ -137,7 +140,7 @@ int analyse_data()
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_graphs_CSIS2025_001_IV.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_CSIS.root", "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirCV = myFile->mkdir("CV_graphs");
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
@@ -206,7 +209,7 @@ int analyse_data()
             glog->SetMarkerColor(kBlue);
 
             // create canvas to draw graph and fit
-            TCanvas* c1 = new TCanvas(Form("CV_dep_volt_channel_%d", ch), Form("CV_dep_volt_channel_%d", ch), 800, 600);
+            TCanvas* c1 = new TCanvas("CV_dep_volt_channel_", Form("CV_dep_volt_channel_%d", ch), 800, 600);
             c1->SetGrid();
             c1->SetTicks();
             c1->SetLeftMargin(0.15);
@@ -229,13 +232,22 @@ int analyse_data()
 
             // -----------------Fit and calculate depletion voltage------------------
 
-            // first fit: left region (line with slope)
-            glog->Fit("pol1", "Q0", "", x_log[1], x_log[6]);
-            TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
-            lfit->SetLineColor(kRed);
+            // // first fit: left region (line with slope)
+            // glog->Fit("pol1", "0E", "", x_log[1], x_log[6]);
+            // TF1* lfit = (TF1*)glog->GetFunction("pol1")->Clone("lfit");
+            // lfit->SetLineColor(kRed);
+            // lfit->SetLineWidth(2);
+            // lfit->SetLineStyle(2); // dashed
+            // lfit->SetRange(x_log[1], x_log[6]);
+            // lfit->Draw("SAME");
+
+            // second fit: right region (horizontal line)
+            TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[6]);
+            glog->Fit(lfit, "QR0");
+            lfit->SetLineColor(kGreen+3);
             lfit->SetLineWidth(2);
-            lfit->SetLineStyle(2); // dashed
-            lfit->SetRange(0,5);
+            lfit->SetLineStyle(7); // dotted
+            lfit->SetRange(x_log[1], x_log[6]);
             lfit->Draw("SAME");
 
             // second fit: right region (horizontal line)
@@ -244,7 +256,7 @@ int analyse_data()
             rfit->SetLineColor(kGreen+3);
             rfit->SetLineWidth(2);
             rfit->SetLineStyle(7); // dotted
-            rfit->SetRange(3.5,5.5);
+            rfit->SetRange(x_log[n_volt-6],x_log[n_volt-1]);
             rfit->Draw("SAME");
 
             // calculate intersection (intersection point is depletion voltage V_dep)
@@ -255,6 +267,14 @@ int analyse_data()
             double log_Vdep = (p0_2 - p0_1) / (p1_1 - p1_2); // the lines cross at: p0_1 + p1_1 * x = p0_2 + p1_2 * x
             double V_dep = std::exp(log_Vdep); // convert back to linear scale
             // std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
+
+            double chi2_lfit = lfit->GetChisquare();         // chi-squared
+            int ndf_lfit = lfit->GetNDF();                   // number of degrees of freedom
+            double pval_lfit = TMath::Prob(chi2_lfit, ndf_lfit);
+
+            double chi2_rfit = rfit->GetChisquare();         // chi-squared
+            int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
+            double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
 
             // store capacitance of the right plateau of CV in 2D histogram
             hcs_plateau_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
@@ -315,7 +335,7 @@ int analyse_data()
             gnew->SetMarkerColor(kBlue);
 
             // create canvas
-            TCanvas* c2 = new TCanvas(Form("donnor_density_channel_%d", ch), Form("donnor_density_channel_%d", ch), 800, 600);
+            TCanvas* c2 = new TCanvas("donnor_density_channel", Form("donnor_density_channel_%d", ch), 800, 600);
             c2->SetGrid();
             c2->SetTicks();
             c2->SetLeftMargin(0.15);
@@ -377,7 +397,7 @@ int analyse_data()
         // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
         // depletion voltage
-        gStyle->SetPalette(60); // Set default palette
+       
         auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
         cVdep->cd();
         hVdep_map->SetMinimum(43);
@@ -385,23 +405,17 @@ int analyse_data()
         hVdep_map->Draw("COLZ");
         hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
         channel_name->Draw("text same");
-        gPad->Modified();
-        gPad->Update();
 
         // donor density
-        gStyle->SetPalette(60); // Set default palette
         auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
         cndon->cd();
         hndon_map->SetMinimum(1.9e+11);
-        hndon_map->SetMaximum(2.6e+11);
+        hndon_map->SetMaximum(2.5e+11);
         hndon_map->Draw("COLZ");
         hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
         channel_name->Draw("text same");
-        gPad->Modified();
-        gPad->Update();
 
         // capacitance
-        gStyle->SetPalette(60); // Set default palette
         auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
         ccsplat->cd();
         // hcs_plateau_map->SetMinimum(5.5);
@@ -411,8 +425,6 @@ int analyse_data()
         hcs_plateau_map->Draw("COLZ");
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
         channel_name->Draw("text same");
-        gPad->Modified();
-        gPad->Update();
 
         myFile->cd();
         hVdepxch->Write(); // write histogram with depletion voltages per channel
@@ -447,7 +459,7 @@ int analyse_data()
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_graphs_20_IV.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("results/IV_CSIS.root", "RECREATE") );
 
         //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
