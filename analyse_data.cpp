@@ -8,7 +8,6 @@
 #include "TGraphErrors.h"
 gROOT->SetBatch(kTRUE); // Disable graphics
 gStyle->SetOptStat(0); // Disable statistics box
-gStyle->SetPalette(kBlueRedYellow); // Set default color palette
 
 // used values/constants
 const float e = 1.602176634e-19; // charge of an electron in C
@@ -67,11 +66,9 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 
 int analyse_data()
 {
-    gStyle->SetPalette(kBlueRedYellow); // Set default color palette
-
     // ------------------------------------Load data from tree---------------------------------------------------
 
-    std::string storingfile = "stored_data/stored_data_IV.root"; // replace with your file name
+    std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
     // Load ROOT file
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
@@ -247,11 +244,11 @@ int analyse_data()
             lfit->SetLineColor(kGreen+3);
             lfit->SetLineWidth(2);
             lfit->SetLineStyle(7); // dotted
-            lfit->SetRange(x_log[1], x_log[6]);
+            lfit->SetRange(x_log[1], x_log[(n_volt-1)/3]);
             lfit->Draw("SAME");
 
             // second fit: right region (horizontal line)
-            TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-6], x_log[n_volt-1]);
+            TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-(n_volt-1)/3], x_log[n_volt-1]);
             glog->Fit(rfit, "QR0");
             rfit->SetLineColor(kGreen+3);
             rfit->SetLineWidth(2);
@@ -397,6 +394,8 @@ int analyse_data()
         // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
         // depletion voltage
+
+        gStyle->SetPalette(kBlueRedYellow); // Set default color palette
        
         auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
         cVdep->cd();
