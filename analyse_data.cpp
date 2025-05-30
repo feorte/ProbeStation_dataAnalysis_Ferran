@@ -239,12 +239,12 @@ int analyse_data()
             // lfit->Draw("SAME");
 
             // second fit: right region (horizontal line)
-            TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[6]);
+            TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[(n_volt-1)/3]);
             glog->Fit(lfit, "QR0");
             lfit->SetLineColor(kGreen+3);
             lfit->SetLineWidth(2);
             lfit->SetLineStyle(7); // dotted
-            lfit->SetRange(x_log[1], x_log[(n_volt-1)/3]);
+            // lfit->SetRange(x_log[1], x_log[(n_volt-1)/3]);
             lfit->Draw("SAME");
 
             // second fit: right region (horizontal line)
@@ -253,7 +253,7 @@ int analyse_data()
             rfit->SetLineColor(kGreen+3);
             rfit->SetLineWidth(2);
             rfit->SetLineStyle(7); // dotted
-            rfit->SetRange(x_log[n_volt-6],x_log[n_volt-1]);
+            // rfit->SetRange(x_log[n_volt-(n_volt-1)/3], x_log[n_volt-1]);
             rfit->Draw("SAME");
 
             // calculate intersection (intersection point is depletion voltage V_dep)
