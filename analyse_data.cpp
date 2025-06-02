@@ -16,7 +16,6 @@ const float epsSi = 11.7; // relative permittivity of silicon
 const float eps = epsSi * eps0; // permittivity of silicon in F/m
 const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
 
-
 int CVorIV(std::string filename) {
     // Check the file extension to determine if it's CV or IV
     if (filename.size() >= 6) {
@@ -70,6 +69,9 @@ int analyse_data()
 
     std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
+    bool CSIS = true; // set to true if the data is from CSIS, false if from CSIS2
+    int CSIS_ch_map[256] = {48,208,192,240,224,144,128,176,160,80,64,112,96,256,16,32,47,207,191,239,223,143,127,175,159,79,63,111,95,255,15,31,46,206,190,238,222,142,126,174,158,78,62,110,94,254,14,30,45,205,189,237,221,141,125,173,157,77,61,109,93,253,13,29,44,204,188,236,220,140,124,172,156,76,60,108,92,252,12,28,43,203,187,235,219,139,123,171,155,75,59,107,91,251,11,27,42,202,186,234,218,138,122,170,154,74,58,106,90,250,10,26,41,201,185,233,217,137,121,169,153,73,57,105,89,249,9,25,40,200,184,232,216,136,120,168,152,72,56,104,88,248,8,24,39,199,183,231,215,135,119,167,151,71,55,103,87,247,7,23,38,198,182,230,214,134,118,166,150,70,54,102,86,246,6,22,37,197,181,229,213,133,117,165,149,69,53,101,85,245,5,21,36,196,180,228,212,132,116,164,148,68,52,100,84,244,4,20,35,195,179,227,211,131,115,163,147,67,51,99,83,243,3,19,34,194,178,226,210,130,114,162,146,66,50,98,82,242,2,18,33,193,177,225,209,129,113,161,145,65,49,97,81,241,1,17};
+
     // Load ROOT file
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
@@ -121,6 +123,7 @@ int analyse_data()
             16,0.5,16.5); // Y axis
         auto hndon_map = new TH2F("hndon_map","Donnor density;X;Y", 16,0.5,16.5, 16,0.5,16.5);
         auto hcs_plateau_map = new TH2F("hcs_plateau_map","High voltage capacitance;X;Y", 16,0.5,16.5, 16,0.5,16.5);
+        auto hchi2sus = new TH2F("hchi2sus","Weird chi2;X;Y", 16,0.5,16.5, 16,0.5,16.5);
 
 
         //2D histogram that maps channels to positions on the sensor
@@ -161,6 +164,8 @@ int analyse_data()
         std::vector<float> y ;
         std::vector<float> yerr ;
 
+        // vectors to find weird chi2 values
+
        //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
@@ -175,9 +180,17 @@ int analyse_data()
                 yerr.push_back(cs_err->at(indx));
             }
 
+            int ch; // current channel analysing
             // which channel analysing
-            int ch = channel->at(indx);
-            printf("Channel: %d\n", ch);
+            if (CSIS) {
+                // map CSIS channels to sensor channels
+                ch = CSIS_ch_map[channel->at(indx)-1];
+                printf("Channel: %d\n", ch);
+            } else {
+                // use channel number as is
+                ch = channel->at(indx);
+                printf("Channel: %d\n", ch);
+            }
 
             // -------------------CV GRAPH--------------------
             std::vector<float> xerr(n_volt, 0); // no error on x-axis
@@ -238,9 +251,9 @@ int analyse_data()
             // lfit->SetRange(x_log[1], x_log[6]);
             // lfit->Draw("SAME");
 
-            // second fit: right region (horizontal line)
+            // first fit: left region (line with slope)
             TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[(n_volt-1)/3]);
-            glog->Fit(lfit, "QR0");
+            glog->Fit(lfit, "EQR0");
             lfit->SetLineColor(kGreen+3);
             lfit->SetLineWidth(2);
             lfit->SetLineStyle(7); // dotted
@@ -249,7 +262,7 @@ int analyse_data()
 
             // second fit: right region (horizontal line)
             TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-(n_volt-1)/3], x_log[n_volt-1]);
-            glog->Fit(rfit, "QR0");
+            glog->Fit(rfit, "EQR0");
             rfit->SetLineColor(kGreen+3);
             rfit->SetLineWidth(2);
             rfit->SetLineStyle(7); // dotted
@@ -266,17 +279,20 @@ int analyse_data()
             // std::cout << "Depletion voltage V_dep = " << V_dep << " V" << std::endl;
 
             double chi2_lfit = lfit->GetChisquare();         // chi-squared
-            int ndf_lfit = lfit->GetNDF();                   // number of degrees of freedom
-            double pval_lfit = TMath::Prob(chi2_lfit, ndf_lfit);
+            // int ndf_lfit = lfit->GetNDF();                   // number of degrees of freedom
+            // double pval_lfit = TMath::Prob(chi2_lfit, ndf_lfit);
 
             double chi2_rfit = rfit->GetChisquare();         // chi-squared
-            int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
-            double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
+            // int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
+            // double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
 
             // store capacitance of the right plateau of CV in 2D histogram
             hcs_plateau_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                         , ((ch-1)/16)+1 // Y position
                         , std::exp(p0_2)); // value of constant line in V
+            
+
+            
 
             // // lets try to do the fit directly on CV (no log scale)
             // TF1* rfit2 = new TF1("rfit2", "pol0", x[n_volt-6], x[n_volt-1]);
