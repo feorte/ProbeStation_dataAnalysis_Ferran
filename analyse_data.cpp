@@ -414,8 +414,8 @@ int analyse_data()
         // depletion voltage
         auto cVdep = new TCanvas("cVdep", "Canvas", 600, 600);
         cVdep->cd();
-        hVdep_map->SetMinimum(43);
-        hVdep_map->SetMaximum(58);
+        hVdep_map->SetMinimum(38);
+        hVdep_map->SetMaximum(45);
         hVdep_map->Draw("COLZ");
         hVdep_map->GetZaxis()->SetTitle("Vdep [V]");
         channel_name->Draw("text same");
@@ -424,7 +424,7 @@ int analyse_data()
         auto cndon = new TCanvas("cndon_map", "Canvas", 600, 600);
         cndon->cd();
         hndon_map->SetMinimum(1.9e+11);
-        hndon_map->SetMaximum(2.5e+11);
+        hndon_map->SetMaximum(2.3e+11);
         hndon_map->Draw("COLZ");
         hndon_map->GetZaxis()->SetTitle("n_{don} [ne/cm^{3}]");
         channel_name->Draw("text same");
