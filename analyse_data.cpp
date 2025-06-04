@@ -119,7 +119,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 4e+11); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 6, 6.5); // histogram to store depletion voltages distribution
-        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 256, 0.5, 256.5); //histogram to store weird chi2 values
+        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 256, 0.5, 256.5); //histogram to store global chi2 values
+        std::vector<float> chi2_glob; // vector to store global chi2 values
 
         // 2D histogram to store capacitance, depletion voltage and donor density of every channel
         auto hVdep_map = new TH2F("hVdep_map","Depletion Voltage;X;Y",
@@ -290,16 +291,14 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
             lfit->Draw("SAME");
             rfit->Draw("SAME");
 
-
-
             double chi2_lfit = lfit->GetChisquare();         // chi-squared
             // int ndf_lfit = lfit->GetNDF();                   // number of degrees of freedom
             // double pval_lfit = TMath::Prob(chi2_lfit, ndf_lfit);
             double chi2_rfit = rfit->GetChisquare();         // chi-squared
             // int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
             // double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
-            double chi2_glob = chi2_lfit + chi2_rfit; // sum of chi-squared values
-            hchi2->SetBinContent(indx+1, chi2_glob); // store chi2 value in histogram
+            chi2_glob.push_back(chi2_lfit + chi2_rfit); // sum of chi-squared values
+            hchi2->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
             
             //store capacitance in histograms
             hcsxch->SetBinContent(indx+1, std::exp(p0_2)); // channel index starts at 0
