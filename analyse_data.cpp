@@ -119,7 +119,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 4e+11); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 6, 6.5); // histogram to store depletion voltages distribution
-        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 256, 0.5, 256.5); //histogram to store global chi2 values
+        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
 
         // 2D histogram to store capacitance, depletion voltage and donor density of every channel
@@ -298,7 +298,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
             // int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
             // double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
             chi2_glob.push_back(chi2_lfit + chi2_rfit); // sum of chi-squared values
-            hchi2->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
+            hchi2->Fill(chi2_lfit + chi2_rfit); // store chi2 value in histogram
             
             //store capacitance in histograms
             hcsxch->SetBinContent(indx+1, std::exp(p0_2)); // channel index starts at 0
@@ -448,6 +448,35 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         // hcs_plateau_map->SetMinimum(cs_mean - 2*cs_std);
         // hcs_plateau_map->SetMaximum(cs_mean + 2*cs_std);
 
+        //Apart from ranges, also find weird chi2 values and fill histogram with them
+        // float chi2_min = hchi2->GetXaxis()->GetXmin();
+        // float chi2_max = hchi2->GetXaxis()->GetXmax();
+        // hchi2->GetXaxis()->SetRangeUser(-9, 9); // set range for chi2 histogram
+        float chi2_mean = hchi2->GetMean();
+        float chi2_std = hchi2->GetStdDev();
+        cout << "Chi2 mean: " << chi2_mean << ", Chi2 std: " << chi2_std << std::endl;
+
+        // ---------------------------Check for weird chi2 values and fill histogram with them--------------------------
+        for (int i = 0; i<chi2_glob.size(); ++i) {
+            int ch; // current channel analysing
+            // which channel analysing
+            if (CSIS) {
+                // map CSIS channels to sensor channels
+                ch = CSIS_ch_map[channel->at(i)-1];
+            } else {
+                // use channel number as is
+                ch = channel->at(i);
+            }
+            if (ch < 1 || ch > 256) {
+                continue; // skip this channel
+            }
+            // if (chi2_glob[i] < chi2_mean - 2*chi2_std || chi2_glob[i] > chi2_mean + 2*chi2_std) {
+            if (chi2_glob[i] < 1000) {
+                // fill histogram with weird chi2 values
+                hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1); 
+            }
+        }
+
         // ------------------------------------Create 2D map of sensor---------------------------------------------------
 
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
@@ -475,6 +504,15 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
         channel_name->Draw("text same");
 
+        // chi2 suspicius
+        auto cchi2sus = new TCanvas("cchi2sus", "Canvas", 600, 600);
+        cchi2sus->cd();
+        hchi2sus->SetMinimum(0);
+        hchi2sus->SetMaximum(1);
+        hchi2sus->Draw("COLZ");
+        hchi2sus->GetZaxis()->SetTitle("Weird chi2");
+        channel_name->Draw("text same");
+
         myFile->cd();
         hVdepxch->Write(); // write histogram with depletion voltages per channel
         hVdep->Write(); // write histogram with depletiozn voltages distribution
@@ -482,9 +520,11 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         hndon->Write(); // write histogram with donor density distribution
         hcsxch->Write(); // write histogram with capacitance per channel
         hcs->Write(); // write histogram with capacitance distribution
+        hchi2->Write(); // write histogram with chi2 values
         cVdep->Write();
         cndon->Write();
         ccsplat->Write();
+        cchi2sus->Write();
     } // end isCV
     
 
