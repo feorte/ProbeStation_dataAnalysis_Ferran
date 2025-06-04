@@ -14,3 +14,5 @@ colors, automatitzar punts pa fits, valors... preguntar si propagacio de errors 
 automatizar nom cv graphs->guardar en tree nom del file?
 IV curves
 programacio modular
+
+per a cosaxch millor scatter? tambe serviria per a fer la estimacio de fora de rango del chi2?
