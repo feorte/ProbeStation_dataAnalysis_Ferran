@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" )
+int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" )
 {
     // ------------------------------------Load data from tree---------------------------------------------------
 
@@ -72,17 +72,31 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
     bool CSIS = false; // set to true if the data is from CSIS, false if from CSIS2
     int CSIS_ch_map[264] = {48,208,192,240,224,144,128,176,160,80,64,112,96,256,16,32,47,207,191,239,223,143,127,175,159,79,63,111,95,255,15,31,46,206,190,238,222,142,126,174,158,78,62,110,94,254,14,30,45,205,189,237,221,141,125,173,157,77,61,109,93,253,13,29,44,204,188,236,220,140,124,172,156,76,60,108,92,252,12,28,43,203,187,235,219,139,123,171,155,75,59,107,91,251,11,27,42,202,186,234,218,138,122,170,154,74,58,106,90,250,10,26,41,201,185,233,217,137,121,169,153,73,57,105,89,249,9,25,40,200,184,232,216,136,120,168,152,72,56,104,88,248,8,24,39,199,183,231,215,135,119,167,151,71,55,103,87,247,7,23,38,198,182,230,214,134,118,166,150,70,54,102,86,246,6,22,37,197,181,229,213,133,117,165,149,69,53,101,85,245,5,21,36,196,180,228,212,132,116,164,148,68,52,100,84,244,4,20,35,195,179,227,211,131,115,163,147,67,51,99,83,243,3,19,34,194,178,226,210,130,114,162,146,66,50,98,82,242,2,18,33,193,177,225,209,129,113,161,145,65,49,97,81,241,1,17};
 
-    // Load ROOT file
+    // Load ROOT file with data
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
-        std::cerr << "Error: Cannot open ROOT file.\n";
+        std::cerr << "Error: Cannot open ROOT file with data.\n";
         return -1;
     }
 
-    // Load tree from file
-    auto tree = file->Get<TTree>("analysis");
-    if (!tree) {
-        std::cerr << "Error: Tree 'analysis' not found in the file.\n";
+    // Load ROOT file with system capacitance
+    auto file_systCap = std::unique_ptr<TFile>(TFile::Open("stored_data/systemCapacitanceCV.root"));
+    if (!file || file_systCap->IsZombie()) {
+        std::cerr << "Error: Cannot open ROOT file with system capacitance.\n";
+        return -1;
+    }
+
+    // Load tree with data from file
+    auto tree_data = file->Get<TTree>("analysis");
+    if (!tree_data) {
+        std::cerr << "Error: Tree 'analysis' not found in the file with data.\n";
+        return -1;
+    }
+
+    // Load tree with system capacitance
+    auto tree_systCap = file_systCap->Get<TTree>("analysis");
+    if (!tree_data) {
+        std::cerr << "Error: Tree 'analysis' not found in the file with system capacitance.\n";
         return -1;
     }
 
@@ -98,17 +112,22 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         cout << "Processing CV data...\n";
         // Enable only required branches
         const std::vector<std::string> branches = {"voltage", "channel", "cs", "cs_err"};
-        choose_branches(tree, branches);
+        choose_branches(tree_data, branches);
+        choose_branches(tree_systCap, branches);
 
         // Bind branches to variables
         float voltage = 0.0f;
         std::vector<int>* channel = 0;
         std::vector<float>* cs = 0;
         std::vector<float>* cs_err = 0;
-        tree->SetBranchAddress("voltage", &voltage);
-        tree->SetBranchAddress("channel", &channel);
-        tree->SetBranchAddress("cs", &cs);
-        tree->SetBranchAddress("cs_err", &cs_err);
+        std::vector<float>* cs_syst = 0;
+        std::vector<float>* cs_syst_err = 0;
+        tree_data->SetBranchAddress("voltage", &voltage);
+        tree_data->SetBranchAddress("channel", &channel);
+        tree_data->SetBranchAddress("cs", &cs);
+        tree_data->SetBranchAddress("cs_err", &cs_err);
+        tree_systCap->SetBranchAddress("cs", &cs_syst);
+        tree_systCap->SetBranchAddress("cs_err", &cs_syst_err);
 
         // ------------------------------------Create histograms---------------------------------------------------
 
@@ -118,7 +137,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 4e+11); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 6, 6.5); // histogram to store depletion voltages distribution
+        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 5.3, 5.9); // histogram to store depletion voltages distribution
         TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
 
@@ -156,9 +175,9 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         int n_volt=0; //number of different voltages tested
         int n_ch=0; //number of different voltages tested
 
-        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+        for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
             // load the data for the given tree entry
-            tree->GetEntry(iEntry);
+            tree_data->GetEntry(iEntry);
             n_volt=iEntry+1;
         }
         n_ch = channel->size();
@@ -168,6 +187,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         std::vector<float> x ;
         std::vector<float> y ;
         std::vector<float> yerr ;
+        float y_syst; // no error on x-axis
+        float yerr_syst; // no error on x-axis
 
         // vectors to find weird chi2 values
 
@@ -175,10 +196,16 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
 
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
 
-            for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            for (int iEntry = 0; tree_systCap->LoadTree(iEntry) >= 0; ++iEntry) {
                 // load the data for the given tree entry
-                tree->GetEntry(iEntry);
-        
+                tree_systCap->GetEntry(iEntry);
+                y_syst = cs_syst->at(indx);
+                yerr_syst = cs_syst_err->at(indx);
+            }
+
+            for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
+                // load the data for the given tree entry
+                tree_data->GetEntry(iEntry);
                 // fill variables for the CV graph
                 x.push_back(voltage);
                 y.push_back(cs->at(indx));
@@ -200,6 +227,12 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
             if (ch < 1 || ch > 256) {
                 std::cerr << "Error: Channel number out of range (1-256): " << ch << std::endl;
                 continue; // skip this channel
+            }
+
+            // Substract system capacitance from the measured capacitance
+            for (int i = 0; i < n_volt; ++i) {
+                y[i] -= y_syst;
+                yerr[i] = std::sqrt(yerr[i]*yerr[i] + yerr_syst*yerr_syst); // propagate error
             }
 
             // -------------------CV GRAPH--------------------
@@ -498,8 +531,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         // capacitance
         auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
         ccsplat->cd();
-        hcs_plateau_map->SetMinimum(6);
-        hcs_plateau_map->SetMaximum(6.5);
+        hcs_plateau_map->SetMinimum(5.3);
+        hcs_plateau_map->SetMaximum(5.9);
         hcs_plateau_map->Draw("COLZ");
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
         channel_name->Draw("text same");
@@ -534,17 +567,17 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         cout << "Processing IV data...\n";
         // Enable only required branches
         const std::vector<std::string> branches = {"voltage", "channel", "current", "current_err"};
-        choose_branches(tree, branches);
+        choose_branches(tree_data, branches);
 
         // Bind branches to variables
         float voltage = 0.0f;
         std::vector<int>* channel = 0;
         std::vector<float>* current = 0;
         std::vector<float>* current_err = 0;
-        tree->SetBranchAddress("voltage", &voltage);
-        tree->SetBranchAddress("channel", &channel);
-        tree->SetBranchAddress("current", &current);
-        tree->SetBranchAddress("current_err", &current_err);
+        tree_data->SetBranchAddress("voltage", &voltage);
+        tree_data->SetBranchAddress("channel", &channel);
+        tree_data->SetBranchAddress("current", &current);
+        tree_data->SetBranchAddress("current_err", &current_err);
 
         // ------------------------------------Create histograms---------------------------------------------------
         // 1D histogram for current at certain voltage
@@ -582,9 +615,9 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         int n_volt=0; //number of different voltages tested
         int n_ch; //number of different voltages tested
         int map_indx = -1; // index of the voltage used to map current
-        for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+        for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
             // load the data for the given tree entry
-            tree->GetEntry(iEntry);
+            tree_data->GetEntry(iEntry);
             if (voltage==voltage_check){
                 map_indx = iEntry;
             }
@@ -600,9 +633,9 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
 
             //------------------------------------Load all data from given channel----------------------------------------
-            for (int iEntry = 0; tree->LoadTree(iEntry) >= 0; ++iEntry) {
+            for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
                 // load the data for the given tree entry
-                tree->GetEntry(iEntry);
+                tree_data->GetEntry(iEntry);
                 // fill variables for the CV graph
                 x.push_back(voltage);
                 y.push_back(current->at(indx));
