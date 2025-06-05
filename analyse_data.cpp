@@ -138,7 +138,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 4e+11); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 5.3, 5.9); // histogram to store depletion voltages distribution
-        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Channel;Chi2", 150, 0, 2e5); //histogram to store global chi2 values
+        TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+        TH1F* hchi2 = new TH1F("hchi2","Global chi2;Chi2;Entries", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
 
         // 2D histogram to store capacitance, depletion voltage and donor density of every channel
@@ -331,6 +332,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
             // int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
             // double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
             chi2_glob.push_back(chi2_lfit + chi2_rfit); // sum of chi-squared values
+            hchi2xch->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
             hchi2->Fill(chi2_lfit + chi2_rfit); // store chi2 value in histogram
             
             //store capacitance in histograms
@@ -504,7 +506,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
                 continue; // skip this channel
             }
             // if (chi2_glob[i] < chi2_mean - 2*chi2_std || chi2_glob[i] > chi2_mean + 2*chi2_std) {
-            if (chi2_glob[i] < 1000) {
+            if (chi2_glob[i] < 10) {
                 // fill histogram with weird chi2 values
                 hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1); 
             }
@@ -553,6 +555,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
         hndon->Write(); // write histogram with donor density distribution
         hcsxch->Write(); // write histogram with capacitance per channel
         hcs->Write(); // write histogram with capacitance distribution
+        hchi2xch->Write(); // write histogram with chi2 values per channel
         hchi2->Write(); // write histogram with chi2 values
         cVdep->Write();
         cndon->Write();
@@ -694,8 +697,6 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
         myFile->cd();
         ccurr->Write(); 
     }
-
-
 
     return 0;
 }
