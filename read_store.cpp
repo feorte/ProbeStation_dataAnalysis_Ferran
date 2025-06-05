@@ -8,25 +8,29 @@
 int read_store()
 {
     // read the data
-    string datafile = "raw_data/CALICE_6in_256ch_20_20250516_0_CV.txt"; // replace with your file name
+    string datafile = "raw_data/CALICE_6in_256ch_017_IV_CV_20250604_0_CV.txt"; // replace with your file name
+    string systemCapacitance = "raw_data/CALICE_6in_256ch_systemCapacitance_20250604_0_CV.txt"; // replace with your file name
     std::ifstream data (datafile); // open the file directly when initializing the stream object
     cout<<"Reading file: " << datafile << endl;
+    std::ifstream systemCap(systemCapacitance); // open the file directly when initializing the stream object
     
     std::vector<int> customChannels; 
     std::string measurementType;
 
-    if (data.is_open()) {
-        std::string line;
+    if (data.is_open() && systemCap.is_open()) {
+        std::string line_data;
+        std::string line_systemCap;
 
         // Read the first 30 lines (these include headers and metadata)
         for (int i = 0; i < 30; ++i) {
-            std::getline(data, line);
+            std::getline(systemCap, line_systemCap); // read the same line from systemCapacitance file
+            std::getline(data, line_data);
 
              // Check first line for measurement type (IV or CV)
              if (i == 0) {
-                size_t pos = line.find(":");
+                size_t pos = line_data.find(":");
                 if (pos != std::string::npos) {
-                    measurementType = line.substr(pos + 1);
+                    measurementType = line_data.substr(pos + 1);
                     // Trim whitespace
                     measurementType.erase(0, measurementType.find_first_not_of(" \t\r\n"));
                     measurementType.erase(measurementType.find_last_not_of(" \t\r\n") + 1);
@@ -36,10 +40,10 @@ int read_store()
 
             // Line 16 (index 15) contains the custom channels info
             if (i == 15) {
-                size_t pos = line.find(":");
+                size_t pos = line_data.find(":");
                 if (pos != std::string::npos) {
                     // Extract everything after the colon
-                    std::string channelsStr = line.substr(pos + 1);
+                    std::string channelsStr = line_data.substr(pos + 1);
 
                     // Trim leading and trailing whitespace
                     channelsStr.erase(0, channelsStr.find_first_not_of(" \t\r\n"));
@@ -62,6 +66,7 @@ int read_store()
                     }
                 }
             }
+            cout << "Line " << i + 1 << ": " << line_systemCap << std::endl; // print the line for debugging
         }
 
         // Optional: print the list of channels for verification
@@ -77,7 +82,7 @@ int read_store()
         std::filesystem::create_directories("stored_data");
 
         // create the storing file
-        std::string storingfile = "stored_data/stored_data_" + measurementType + ".root";
+        std::string storingfile = "stored_data/stored_data_17_" + measurementType + ".root";
         std::unique_ptr<TFile> myFile(TFile::Open(storingfile.c_str(), "RECREATE"));
 
         // tree to store the data
@@ -298,6 +303,12 @@ int read_store()
 
             analysis->Branch("channel", &customChannels);
 
+            float cs_syst; // system capacitance
+            TBranch *branch_cs_syst = analysis->Branch("cs_syst", &cs_syst);
+
+            float cs_syst_err; // system capacitance
+            TBranch *branch_cs_syst_err = analysis->Branch("cs_syst_err", &cs_syst_err);
+
             std::vector<float> cs_anl(n_ch);
             analysis->Branch("cs", &cs_anl);
 
@@ -359,7 +370,7 @@ int read_store()
 
             while (true){
                 bool success = true;
-
+                
                 for (int i=0; i<n_ch; i++) { 
                     // read the tabular data
                     // the data is separated by tabs, so we can use >> to read it
@@ -394,7 +405,6 @@ int read_store()
 
                 if (!success) break;
 
-
                 // calculate the mean and standard deviation for temperature and humidity
                 mean_temp = 0;
                 mean_hum = 0;
@@ -422,18 +432,28 @@ int read_store()
                     // Optional: handle error (e.g. I/O error)
                     break;
                 }
-
             }
+
+            // float dummy; // to jump over columns we don't want to store
+            // for (int i=0; i<n_ch; i++) { 
+            //     // read the tabular data
+            //     // the data is separated by tabs, so we can use >> to read it
+        
+            //     systemCap >> dummy >> dummy >> cs_syst >> cs_syst_err >> dummy >> dummy 
+            //         >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy 
+            //         >> dummy >> dummy >> dummy >> dummy; 
+
+            //     cout << i+1 <<" System capacitance: " << cs_syst << " +/- " << cs_syst_err << std::endl;
+                
+            //     // Fill measurements into the tree
+            //     branch_cs_syst->Fill();
+            //     branch_cs_syst_err->Fill();
+            // }
         }
 
         else {
             std::cerr << "Unknown measurement type: " << measurementType << std::endl;
         }
-
-
-
-
-
         
         //analysis->Scan();
 
@@ -443,12 +463,10 @@ int read_store()
         // data.close();
         std::cout << "Storing file created successfully." << std::endl;
     }
- 
 
     else {
         cout << "File could not be opened" << endl;
     }    
-
 
     return 0;
 } 
