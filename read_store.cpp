@@ -8,7 +8,8 @@
 int read_store()
 {
     // read the data
-    string datafile = "raw_data/CALICE_6in_256ch_systemCapacitance_20250604_0_CV.txt"; // replace with your file name
+    string datafile = "raw_data/CALICE_6in_256ch_018_IV_CV_20250605_0_CV.txt"; // replace with your file name
+    string sens_number = "18";
     std::ifstream data (datafile); // open the file directly when initializing the stream object
     cout<<"Reading file: " << datafile << endl;    
     std::vector<int> customChannels; 
@@ -76,7 +77,7 @@ int read_store()
 
         // create the storing file
         // std::string storingfile = "stored_data/stored_data_17_" + measurementType + ".root";
-        std::string storingfile = "stored_data/systemCapacitance" + measurementType + ".root";
+        std::string storingfile = "stored_data/stored_data_"+ sens_number + "_" + measurementType + ".root";
         std::unique_ptr<TFile> myFile(TFile::Open(storingfile.c_str(), "RECREATE"));
 
         // tree to store the data
@@ -419,7 +420,6 @@ int read_store()
                     // Optional: handle error (e.g. I/O error)
                     break;
                 }
-                analysis->Scan(); // scan the analysis tree to see the data
             }
         }
 
