@@ -63,8 +63,10 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" )
+int analyse_data(std::string number_sensor = "18", std::string type = "IV")
 {
+    std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
+    
     // ------------------------------------Load data from tree---------------------------------------------------
 
     // std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
@@ -135,7 +137,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 200, 17, 80); // histogram to store depletion voltages distribution
         TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 4e+11); // histogram to store depletion voltages distribution
+        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 5.3, 5.9); // histogram to store depletion voltages distribution
         TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
@@ -165,7 +167,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_17.root", "RECREATE") );
+        std:: string results_file = "results/CV_" + number_sensor + ".root";
+        std::unique_ptr<TFile> myFile( TFile::Open(results_file.c_str(), "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirCV = myFile->mkdir("CV_graphs");
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
@@ -467,19 +470,19 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         // set ranges for 1D histograms
         float Vdep_mean = hVdep->GetMean();
         float Vdep_std = hVdep->GetStdDev();
-        hVdep->GetXaxis()->SetRangeUser(Vdep_mean - 2*Vdep_std, Vdep_mean + 2*Vdep_std);
+        hVdep->GetXaxis()->SetRangeUser(Vdep_mean - 3*Vdep_std, Vdep_mean + 3*Vdep_std);
         float ndon_mean = hndon->GetMean();
         float ndon_std = hndon->GetStdDev();
-        hndon->GetXaxis()->SetRangeUser(ndon_mean - 2*ndon_std, ndon_mean + 2*ndon_std);
+        hndon->GetXaxis()->SetRangeUser(ndon_mean - 3*ndon_std, ndon_mean + 3*ndon_std);
         // float cs_mean = hcs->GetMean();
         // float cs_std = hcs->GetStdDev();
         // hcs->SetMinimum(cs_mean - 2*cs_std);
         // hcs->SetMaximum(cs_mean + 2*cs_std);
         // set ranges for 2D histograms
-        hVdep_map->SetMinimum(Vdep_mean - 2*Vdep_std);
-        hVdep_map->SetMaximum(Vdep_mean + 2*Vdep_std);
-        hndon_map->SetMinimum(ndon_mean - 2*ndon_std);
-        hndon_map->SetMaximum(ndon_mean + 2*ndon_std);
+        hVdep_map->SetMinimum(Vdep_mean - 3*Vdep_std);
+        hVdep_map->SetMaximum(Vdep_mean + 3*Vdep_std);
+        hndon_map->SetMinimum(ndon_mean - 3*ndon_std);
+        hndon_map->SetMaximum(ndon_mean + 3*ndon_std);
         // hcs_plateau_map->SetMinimum(cs_mean - 2*cs_std);
         // hcs_plateau_map->SetMaximum(cs_mean + 2*cs_std);
 
@@ -604,7 +607,8 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/IV_17.root", "RECREATE") );
+        std:: string results_file = "results/IV_" + number_sensor + ".root";
+        std::unique_ptr<TFile> myFile( TFile::Open(results_file.c_str(), "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirIV = myFile->mkdir("IV_graphs");
 
@@ -693,9 +697,9 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" 
 
         float curr_mean = hcurr->GetMean();
         float curr_std = hcurr->GetStdDev();
-        hcurr->GetXaxis()->SetRangeUser(curr_mean - 2*curr_std, curr_mean + 2*curr_std);
-        hcurr_map->SetMinimum(curr_mean - 2*curr_std);
-        hcurr_map->SetMaximum(curr_mean + 2*curr_std);
+        hcurr->GetXaxis()->SetRangeUser(curr_mean - 3*curr_std, curr_mean + 3*curr_std);
+        hcurr_map->SetMinimum(curr_mean - 3*curr_std);
+        hcurr_map->SetMaximum(curr_mean + 3*curr_std);
         
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
