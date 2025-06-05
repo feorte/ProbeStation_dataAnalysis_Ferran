@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
+int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" )
 {
     // ------------------------------------Load data from tree---------------------------------------------------
 
@@ -145,7 +145,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_20.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("results/CV_17.root", "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirCV = myFile->mkdir("CV_graphs");
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
@@ -566,7 +566,7 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_CV.root" )
         // folder to store results files
         std::filesystem::create_directories("results");
         // results root files
-        std::unique_ptr<TFile> myFile( TFile::Open("results/IV_20.root", "RECREATE") );
+        std::unique_ptr<TFile> myFile( TFile::Open("results/IV_17.root", "RECREATE") );
         // Create directories inside root file 
         TDirectory* dirIV = myFile->mkdir("IV_graphs");
 
