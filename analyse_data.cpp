@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" )
+int analyse_data(std::string storingfile = "stored_data/stored_data_17_IV.root" )
 {
     // ------------------------------------Load data from tree---------------------------------------------------
 
@@ -583,8 +583,10 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
         tree_data->SetBranchAddress("current_err", &current_err);
 
         // ------------------------------------Create histograms---------------------------------------------------
-        // 1D histogram for current at certain voltage
+        // Histograms for current at certain voltage
         int voltage_check = 120; // voltage for which current is measured
+        auto hcurrxch = new TH1F("hcurrxch", Form("Current per Channel at %d;Channel;Current [nA]", voltage_check), 256, 0.5, 256.5); // histogram to store current per channel
+        auto hcurr = new TH1F("hcurr", Form("Current at %d;Current [nA];Entries", voltage_check), 100, -0.5, 0.5); // histogram to store current distribution
         auto hcurr_map = new TH2F("hcurr_map",Form("Current at %d ;X;Y", voltage_check), 16,0.5,16.5, 16,0.5,16.5);
 
 
@@ -656,8 +658,10 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
                 ch = channel->at(indx);
                 printf("Channel: %d\n", ch);
             }
-
-
+            if (ch < 1 || ch > 256) {
+                std::cerr << "Error: Channel number out of range (1-256): " << ch << std::endl;
+                continue; // skip this channel
+            }
             // -------------------IV GRAPH--------------------
             std::vector<float> xerr(n_volt, 0); // no error on x-axis
             TGraph *g = new TGraphErrors(n_volt, &x[0], &y[0], &xerr[0], &yerr[0]);
@@ -669,7 +673,10 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
             //g->Draw();
             g->GetXaxis()->CenterTitle();
             g->GetYaxis()->CenterTitle();
-            
+
+            // Fill histograms with current at given voltage
+            hcurrxch->SetBinContent(indx+1, y[map_indx]); // store current at given voltage in histogram
+            hcurr->Fill(y[map_indx]); // store current at given voltage in histogram    
             // store capacitance of the right plateau of CV in 2D histogram
             hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                         , ((ch-1)/16)+1 // Y position
@@ -683,18 +690,26 @@ int analyse_data(std::string storingfile = "stored_data/stored_data_17_CV.root" 
             y.clear();
             yerr.clear();
         }   
+
+        float curr_mean = hcurr->GetMean();
+        float curr_std = hcurr->GetStdDev();
+        hcurr->GetXaxis()->SetRangeUser(curr_mean - 2*curr_std, curr_mean + 2*curr_std);
+        hcurr_map->SetMinimum(curr_mean - 2*curr_std);
+        hcurr_map->SetMaximum(curr_mean + 2*curr_std);
         
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
         auto ccurr = new TCanvas("ccurr", "Canvas", 600, 600);
         ccurr->cd();
-        hcurr_map->SetMinimum(0.025);
-        hcurr_map->SetMaximum(0.18);
+        // hcurr_map->SetMinimum(0.025);
+        // hcurr_map->SetMaximum(0.18);
         hcurr_map->Draw("COLZ");
         hcurr_map->GetZaxis()->SetTitle("Current [nA]");
         channel_name->Draw("text same");
 
         myFile->cd();
+        hcurrxch->Write(); // write histogram with current per channel
+        hcurr->Write(); // write histogram with current distribution
         ccurr->Write(); 
     }
 
