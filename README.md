@@ -18,3 +18,5 @@ programacio modular
 per a cosaxch millor scatter? tambe serviria per a fer la estimacio de fora de rango del chi2?
 
 iv rango en stv, aplicar a tots, imagen histogramas y canvas 
+
+comparar resultats entre sensors, pasarselos a melissa. 
