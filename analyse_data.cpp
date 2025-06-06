@@ -299,19 +299,20 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
             // lfit->Draw("SAME");
 
             // first fit: left region (line with slope)
-            TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[(n_volt-1)/3]);
+            // TF1* lfit = new TF1("lfit", "pol1", x_log[1], x_log[(n_volt-1)/3]);
+            TF1* lfit = new TF1("lfit", "pol1", x_log[1], std::log(35)); // fit to a line with slope, range from first point to 35 V
             glog->Fit(lfit, "EQR0");
             lfit->SetLineColor(kGreen+3);
             lfit->SetLineWidth(2);
             lfit->SetLineStyle(7); // dotted
 
             // second fit: right region (horizontal line)
-            TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-(n_volt-1)/3], x_log[n_volt-1]);
+            // TF1* rfit = new TF1("rfit", "pol0", x_log[n_volt-(n_volt-1)/3], x_log[n_volt-1]);
+            TF1* rfit = new TF1("rfit", "pol0", std::log(60), x_log[n_volt-1]);// fit to a constant, range from 60 V to last point
             glog->Fit(rfit, "EQR0");
             rfit->SetLineColor(kRed);
             rfit->SetLineWidth(2);
             rfit->SetLineStyle(7); // dotted
-            rfit->SetRange(x_log[n_volt-(n_volt-1)/3]-1, x_log[n_volt-1]);
 
             // calculate intersection (intersection point is depletion voltage V_dep)
             double p0_1 = lfit->GetParameter(0);
