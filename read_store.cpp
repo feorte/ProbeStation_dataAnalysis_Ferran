@@ -8,16 +8,15 @@
 int read_store()
 {
     // read the data
-    string datafile = "raw_data/CALICE_6in_256ch_20_20250516_0_CV.txt"; // replace with your file name
+    string datafile = "raw_data/CALICE_6in_256ch_018_IV_CV_20250605_0_CV.txt"; // replace with your file name
+    string sens_number = "18";
     std::ifstream data (datafile); // open the file directly when initializing the stream object
-    cout<<"Reading file: " << datafile << endl;
-    
+    cout<<"Reading file: " << datafile << endl;    
     std::vector<int> customChannels; 
     std::string measurementType;
 
     if (data.is_open()) {
         std::string line;
-
         // Read the first 30 lines (these include headers and metadata)
         for (int i = 0; i < 30; ++i) {
             std::getline(data, line);
@@ -77,7 +76,8 @@ int read_store()
         std::filesystem::create_directories("stored_data");
 
         // create the storing file
-        std::string storingfile = "stored_data/stored_data_" + measurementType + ".root";
+        // std::string storingfile = "stored_data/stored_data_17_" + measurementType + ".root";
+        std::string storingfile = "stored_data/stored_data_"+ sens_number + "_" + measurementType + ".root";
         std::unique_ptr<TFile> myFile(TFile::Open(storingfile.c_str(), "RECREATE"));
 
         // tree to store the data
@@ -359,7 +359,7 @@ int read_store()
 
             while (true){
                 bool success = true;
-
+                
                 for (int i=0; i<n_ch; i++) { 
                     // read the tabular data
                     // the data is separated by tabs, so we can use >> to read it
@@ -389,11 +389,9 @@ int read_store()
                     phase_err_anl[i] = phase_err;
                     cs_uncorr_anl[i] = cs_uncorr;
                     cp_uncorr_anl[i] = cp_uncorr;
-
                 }
 
                 if (!success) break;
-
 
                 // calculate the mean and standard deviation for temperature and humidity
                 mean_temp = 0;
@@ -422,18 +420,12 @@ int read_store()
                     // Optional: handle error (e.g. I/O error)
                     break;
                 }
-
             }
         }
 
         else {
             std::cerr << "Unknown measurement type: " << measurementType << std::endl;
         }
-
-
-
-
-
         
         //analysis->Scan();
 
@@ -443,12 +435,10 @@ int read_store()
         // data.close();
         std::cout << "Storing file created successfully." << std::endl;
     }
- 
 
     else {
         cout << "File could not be opened" << endl;
     }    
-
 
     return 0;
 } 

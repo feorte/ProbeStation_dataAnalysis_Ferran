@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# List of sensors
+sensors=("18" "17" "16" "15" "14" "13" "10" "09")
+# List of types
+types=("IV" "CV")
+
+# Loop over each sensor and type
+for sensor in "${sensors[@]}"; do
+  for type in "${types[@]}"; do
+    echo "Running analyse_data for Sensor: $sensor, Type: $type"
+    root -l -q "analyse_data.cpp(\"$sensor\", \"$type\")"
+    echo ""
+  done
+done

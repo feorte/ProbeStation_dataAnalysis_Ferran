@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "18", std::string type = "CV")
+int analyse_data(std::string number_sensor = "09", std::string type = "CV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -698,9 +698,9 @@ int analyse_data(std::string number_sensor = "18", std::string type = "CV")
 
         float curr_mean = hcurr->GetMean();
         float curr_std = hcurr->GetStdDev();
-        hcurr->GetXaxis()->SetRangeUser(curr_mean - 2*curr_std, curr_mean + 2*curr_std);
-        hcurr_map->SetMinimum(curr_mean - 2*curr_std);
-        hcurr_map->SetMaximum(curr_mean + 2*curr_std);
+        hcurr->GetXaxis()->SetRangeUser(curr_mean - 3*curr_std, curr_mean + 3*curr_std);
+        hcurr_map->SetMinimum(curr_mean - 3*curr_std);
+        hcurr_map->SetMaximum(curr_mean + 3*curr_std);
         
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
