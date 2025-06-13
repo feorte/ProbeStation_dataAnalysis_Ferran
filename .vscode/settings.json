@@ -52,6 +52,14 @@
         "xutility": "cpp",
         "vector": "cpp",
         "MyScript.C": "cpp",
-        "MyScript (1).C": "cpp"
+        "MyScript (1).C": "cpp",
+        "filesystem": "cpp",
+        "ratio": "cpp",
+        "algorithm": "cpp",
+        "chrono": "cpp",
+        "forward_list": "cpp",
+        "iomanip": "cpp",
+        "optional": "cpp",
+        "sstream": "cpp"
     }
 }

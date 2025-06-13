@@ -8,8 +8,8 @@
 int read_store()
 {
     // read the data
-    string datafile = "raw_data/CALICE_6in_256ch_018_IV_CV_20250605_0_CV.txt"; // replace with your file name
-    string sens_number = "18";
+    string datafile = "raw_data/CALICE_6in_256ch_CSIS2025_008_IV_CV_20250523_0_IV.txt"; // replace with your file name
+    string sens_number = "CSIS_008";
     std::ifstream data (datafile); // open the file directly when initializing the stream object
     cout<<"Reading file: " << datafile << endl;    
     std::vector<int> customChannels; 

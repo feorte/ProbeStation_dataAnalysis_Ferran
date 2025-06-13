@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "09", std::string type = "CV")
+int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -139,7 +139,7 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 5.3, 5.9); // histogram to store depletion voltages distribution
+        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 4.4, 5.9); // histogram to store depletion voltages distribution
         TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hchi2 = new TH1F("hchi2","Global chi2;Chi2;Entries", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
@@ -537,7 +537,7 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         // capacitance
         auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
         ccsplat->cd();
-        hcs_plateau_map->SetMinimum(5.3);
+        hcs_plateau_map->SetMinimum(4.4);
         hcs_plateau_map->SetMaximum(5.9);
         hcs_plateau_map->Draw("COLZ");
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
@@ -698,9 +698,9 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
 
         float curr_mean = hcurr->GetMean();
         float curr_std = hcurr->GetStdDev();
-        hcurr->GetXaxis()->SetRangeUser(curr_mean - 3*curr_std, curr_mean + 3*curr_std);
-        hcurr_map->SetMinimum(curr_mean - 3*curr_std);
-        hcurr_map->SetMaximum(curr_mean + 3*curr_std);
+        hcurr->GetXaxis()->SetRangeUser(curr_mean - 2*curr_std, curr_mean + 2*curr_std);
+        hcurr_map->SetMinimum(curr_mean - 2*curr_std);
+        hcurr_map->SetMaximum(curr_mean + 2*curr_std);
         
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
