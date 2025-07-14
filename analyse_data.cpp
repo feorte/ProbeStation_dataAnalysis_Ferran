@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV")
+int analyse_data(std::string number_sensor = "09", std::string type = "CV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -113,7 +113,7 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
     if (isCV==true) {
         cout << "Processing CV data...\n";
         // Enable only required branches
-        const std::vector<std::string> branches = {"voltage", "channel", "cs", "cs_err"};
+        const std::vector<std::string> branches = {"voltage", "channel", "cs_uncorr", "cs_err"};
         choose_branches(tree_data, branches);
         choose_branches(tree_systCap, branches);
 
@@ -126,9 +126,9 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
         std::vector<float>* cs_syst_err = 0;
         tree_data->SetBranchAddress("voltage", &voltage);
         tree_data->SetBranchAddress("channel", &channel);
-        tree_data->SetBranchAddress("cs", &cs);
+        tree_data->SetBranchAddress("cs_uncorr", &cs);
         tree_data->SetBranchAddress("cs_err", &cs_err);
-        tree_systCap->SetBranchAddress("cs", &cs_syst);
+        tree_systCap->SetBranchAddress("cs_uncorr", &cs_syst);
         tree_systCap->SetBranchAddress("cs_err", &cs_syst_err);
 
         // ------------------------------------Create histograms---------------------------------------------------
