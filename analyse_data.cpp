@@ -14,7 +14,7 @@ const float e = 1.602176634e-19; // charge of an electron in C
 const float eps0 = 8.8541878128e-12; // vacuum permittivity in F/m
 const float epsSi = 11.7; // relative permittivity of silicon
 const float eps = epsSi * eps0; // permittivity of silicon in F/m
-const float A = 30.25e-6; // pad area in m^2 (1 mm^2 = 1e-6 m^2), pads are 5.5x5.5 mm^2
+const float A = 30.25e-6; // pad area in m^2; 5.5 × 5.5 mm^2 = 30.25 mm^2 = 30.25e-6 m^2
 
 int CVorIV(std::string filename) {
     // Check the file extension to determine if it's CV or IV
@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV")
+int analyse_data(std::string number_sensor = "09", std::string type = "CV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -113,9 +113,10 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
     if (isCV==true) {
         cout << "Processing CV data...\n";
         // Enable only required branches
-        const std::vector<std::string> branches = {"voltage", "channel", "cs", "cs_err"};
+        const std::vector<std::string> branches = {"voltage", "channel", "cs_uncorr", "cs_err"};
+        const std::vector<std::string> branches_syst = {"voltage", "channel", "cs", "cs_err"};
         choose_branches(tree_data, branches);
-        choose_branches(tree_systCap, branches);
+        choose_branches(tree_systCap, branches_syst);
 
         // Bind branches to variables
         float voltage = 0.0f;
@@ -126,7 +127,7 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
         std::vector<float>* cs_syst_err = 0;
         tree_data->SetBranchAddress("voltage", &voltage);
         tree_data->SetBranchAddress("channel", &channel);
-        tree_data->SetBranchAddress("cs", &cs);
+        tree_data->SetBranchAddress("cs_uncorr", &cs);
         tree_data->SetBranchAddress("cs_err", &cs_err);
         tree_systCap->SetBranchAddress("cs", &cs_syst);
         tree_systCap->SetBranchAddress("cs_err", &cs_syst_err);
@@ -336,7 +337,12 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
             // int ndf_rfit = rfit->GetNDF();                   // number of degrees of freedom
             // double pval_rfit = TMath::Prob(chi2_rfit, ndf_rfit);
             chi2_glob.push_back(chi2_lfit + chi2_rfit); // sum of chi-squared values
-            hchi2xch->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
+            if (!std::isnan(V_dep) && std::isfinite(V_dep)) {
+                hchi2xch->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
+            } else {
+                std::cerr << "Warning: Skipping invalid chi2_glob for channel index " << indx+1 << std::endl;
+                //hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1); 
+            }
             hchi2->Fill(chi2_lfit + chi2_rfit); // store chi2 value in histogram
             
             //store capacitance in histograms
@@ -356,7 +362,11 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
 
             // store depletion voltage in histograms
             // hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-            hVdepxch->SetBinContent(indx+1, V_dep); // channel index starts at 0
+            if (!std::isnan(V_dep) && std::isfinite(V_dep)) {
+                hVdepxch->SetBinContent(indx+1, V_dep);
+            } else {
+                std::cerr << "Warning: Skipping invalid V_dep for channel index " << indx+1 << std::endl; 
+            }
             hVdep->Fill(V_dep); // fill histogram with depletion voltage
             hVdep_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                             , ((ch-1)/16)+1 // Y position
@@ -442,7 +452,7 @@ int analyse_data(std::string number_sensor = "CSIS_008", std::string type = "IV"
             // get donor density from slope of the fit
             double p1_don = don_fit->GetParameter(1); //slope of the fit in [V^{-1}pF^{-2}]
             p1_don = p1_don * std::pow(10,24); // convert from pF^{-2} to F^{-2}
-            double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don*std::pow(10,6)); //donor density in [number elctrons*cm^{-3}]
+            double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don)*1e-6; //donor density in [number elctrons*cm^{-3}]
             // std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
 
             // fill histogram with donor density
