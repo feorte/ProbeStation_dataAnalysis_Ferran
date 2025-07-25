@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "09", std::string type = "CV")
+int analyse_data(std::string number_sensor = "16", std::string type = "IV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -599,7 +599,7 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         // Histograms for current at certain voltage
         int voltage_check = 120; // voltage for which current is measured
         auto hcurrxch = new TH1F("hcurrxch", Form("Current per Channel at %d;Channel;Current [nA]", voltage_check), 256, 0.5, 256.5); // histogram to store current per channel
-        auto hcurr = new TH1F("hcurr", Form("Current at %d;Current [nA];Entries", voltage_check), 100, -0.5, 0.5); // histogram to store current distribution
+        auto hcurr = new TH1F("hcurr", Form("Current at %d;Current [nA];Entries", voltage_check), 200, -0.5, 0.5); // histogram to store current distribution
         auto hcurr_map = new TH2F("hcurr_map",Form("Current at %d ;X;Y", voltage_check), 16,0.5,16.5, 16,0.5,16.5);
 
 
@@ -632,7 +632,7 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         // ---------------------Get how many different voltages an channels were tested. Also find position of voltage used to map current---------------------
 
         int n_volt=0; //number of different voltages tested
-        int n_ch; //number of different voltages tested
+        int n_ch; //number of different channels tested
         int map_indx = -1; // index of the voltage used to map current
         for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
             // load the data for the given tree entry
@@ -695,6 +695,15 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
             hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                         , ((ch-1)/16)+1 // Y position
                         , y[map_indx]); // value of current at given voltage
+
+            //             // Fill histograms with current at given voltage
+            // hcurrxch->SetBinContent(indx+1, TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram
+            // hcurr->Fill(TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram    
+            // // store capacitance of the right plateau of CV in 2D histogram
+            // hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
+            //             , ((ch-1)/16)+1 // Y position
+            //             , TMath::Mean(y.size(), &y[0])); // value of current at given voltage
+
 
             dirIV->cd();
             g->Write();
