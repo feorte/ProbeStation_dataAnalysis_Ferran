@@ -114,9 +114,8 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         cout << "Processing CV data...\n";
         // Enable only required branches
         const std::vector<std::string> branches = {"voltage", "channel", "cs_uncorr", "cs_err"};
-        const std::vector<std::string> branches_syst = {"voltage", "channel", "cs", "cs_err"};
         choose_branches(tree_data, branches);
-        choose_branches(tree_systCap, branches_syst);
+        choose_branches(tree_systCap, branches);
 
         // Bind branches to variables
         float voltage = 0.0f;
@@ -129,7 +128,7 @@ int analyse_data(std::string number_sensor = "09", std::string type = "CV")
         tree_data->SetBranchAddress("channel", &channel);
         tree_data->SetBranchAddress("cs_uncorr", &cs);
         tree_data->SetBranchAddress("cs_err", &cs_err);
-        tree_systCap->SetBranchAddress("cs", &cs_syst);
+        tree_systCap->SetBranchAddress("cs_uncorr", &cs_syst);
         tree_systCap->SetBranchAddress("cs_err", &cs_syst_err);
 
         // ------------------------------------Create histograms---------------------------------------------------
