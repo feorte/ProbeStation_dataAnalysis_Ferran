@@ -20,3 +20,6 @@ per a cosaxch millor scatter? tambe serviria per a fer la estimacio de fora de r
 iv rango en stv, aplicar a tots, imagen histogramas y canvas 
 
 comparar resultats entre sensors, pasarselos a melissa. 
+
+
+ara toca focus del full histograma i els mega histogrames. deixar un poc de espai despres dels maxims dels histogrames.
