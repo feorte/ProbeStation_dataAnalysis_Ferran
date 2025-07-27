@@ -139,15 +139,15 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
 
         // 1D histograms to store depletion voltages and donor density distributions
         TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 200, 17, 80); // histogram to store depletion voltages distribution
+        // TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 200, 17, 80); // histogram to store depletion voltages distribution
         TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution
-        TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution at borders
-        TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution in inner channels
+        // TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution
+        // TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution at borders
+        // TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution in inner channels
         TH1F* hcsxch = new TH1F("hcsxch", "High voltage capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
-        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 4.4, 5.9); // histogram to store depletion voltages distribution
-        TH1F* hcs_border = new TH1F("hcs_border", "High voltage capacitance at borders;Capacitance [pF];Entries", 50, 4.4, 5.9); // histogram to store depletion voltages distribution at borders
-        TH1F* hcs_inner = new TH1F("hcs_inner", "High voltage capacitance in inner channels;Capacitance [pF];Entries", 50, 4.4, 5.9); // histogram to store depletion voltages distribution in inner channels
+        // TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution
+        // TH1F* hcs_border = new TH1F("hcs_border", "High voltage capacitance at borders;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution at borders
+        // TH1F* hcs_inner = new TH1F("hcs_inner", "High voltage capacitance in inner channels;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution in inner channels
         TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
         TH1F* hchi2 = new TH1F("hchi2","Global chi2;Chi2;Entries", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
@@ -193,7 +193,7 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             n_volt=iEntry+1;
         }
         n_ch = channel->size();
-        cout<<"Number of channels: " << n_ch << endl;
+        // cout<<"Number of channels: " << n_ch << endl;
 
         // define variables for the CV graph
         std::vector<float> x ;
@@ -202,7 +202,15 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         float y_syst; // no error on x-axis
         float yerr_syst; // no error on x-axis
 
-        // vectors to find weird chi2 values
+        // vectors to store main values
+        std::vector<float> vect_vdep; // vector to store depletion voltages
+        std::vector<float> vect_donor_density; // vector to store donor densities
+        std::vector<float> vect_donor_density_inner; // vector to store donor densities
+        std::vector<float> vect_donor_density_border; // vector to store donor densities at borders
+        std::vector<float> vect_capacitance; // vector to store capacitances
+        std::vector<float> vect_capacitance_inner; // vector to store capacitances
+        std::vector<float> vect_capacitance_border; // vector to store capacitances at borders
+
 
        //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
 
@@ -229,11 +237,11 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             if (CSIS) {
                 // map CSIS channels to sensor channels
                 ch = CSIS_ch_map[channel->at(indx)-1];
-                printf("Channel: %d\n", ch);
+                // printf("Channel: %d\n", ch);
             } else {
                 // use channel number as is
                 ch = channel->at(indx);
-                printf("Channel: %d\n", ch);
+                // printf("Channel: %d\n", ch);
             }
 
             if (ch < 1 || ch > 256) {
@@ -354,7 +362,8 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             
             //store capacitance in histograms
             hcsxch->SetBinContent(indx+1, std::exp(p0_2)); // channel index starts at 0
-            hcs->Fill(std::exp(p0_2));
+            // hcs->Fill(std::exp(p0_2));
+            vect_capacitance.push_back(std::exp(p0_2));
             // store capacitance of the right plateau of CV in 2D histogram
             hcs_plateau_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                         , ((ch-1)/16)+1 // Y position
@@ -363,10 +372,12 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             // check if channel is at the border or in the inner part of the sensor
             bool is_border = std::find(border_channels.begin(), border_channels.end(), ch) != border_channels.end();
             if (is_border) {
-                hcs_border->Fill(std::exp(p0_2)); // fill histogram with capacitance at borders
+                // hcs_border->Fill(std::exp(p0_2)); // fill histogram with capacitance at borders
+                vect_capacitance_border.push_back(std::exp(p0_2));
             }
             else {
-                hcs_inner->Fill(std::exp(p0_2)); // fill histogram with capacitance in inner channels
+                // hcs_inner->Fill(std::exp(p0_2)); // fill histogram with capacitance in inner channels
+                vect_capacitance_inner.push_back(std::exp(p0_2));
             }
 
                     // // lets try to do the fit directly on CV (no log scale)
@@ -383,7 +394,8 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             } else {
                 std::cerr << "Warning: Skipping invalid V_dep for channel index " << indx+1 << std::endl; 
             }
-            hVdep->Fill(V_dep); // fill histogram with depletion voltage
+            // hVdep->Fill(V_dep); // fill histogram with depletion voltage
+            vect_vdep.push_back(V_dep); // store depletion voltage in vector
             hVdep_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                             , ((ch-1)/16)+1 // Y position
                             , V_dep); // fill 2D histogram with depletion voltage
@@ -473,16 +485,19 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
 
             // fill histogram with donor density
             hndonxch->SetBinContent(indx+1, donor_density); // channel index starts at 0
-            hndon->Fill(donor_density);
+            // hndon->Fill(donor_density);
+            vect_donor_density.push_back(donor_density); // store donor density in vector
             hndon_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
                             , ((ch-1)/16)+1 // Y position
                             , donor_density); // fill 2D histogram with depletion voltage
 
             // already checked if channel is at the border or in the inner part of the sensor
             if (is_border) {
-                hndon_border->Fill(donor_density); // fill histogram with donor density at borders
+                // hndon_border->Fill(donor_density); // fill histogram with donor density at borders
+                vect_donor_density_border.push_back(donor_density); // store donor density at borders in vector
             } else {
-                hndon_inner->Fill(donor_density); // fill histogram with donor density in inner channels
+                // hndon_inner->Fill(donor_density); // fill histogram with donor density in inner channels
+                vect_donor_density_inner.push_back(donor_density); // store donor density in inner channels in vector
             }
 
             dirCV->cd();
@@ -501,31 +516,160 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         } // end of channel loop
 
         //------------------------Set ranges for histograms-------------------------
-        // set ranges for 1D histograms
+
+        //range for 1D histograms
+        // find min and max values in the vectors
+        double min_vdep = *std::min_element(vect_vdep.begin(), vect_vdep.end());
+        double max_vdep = *std::max_element(vect_vdep.begin(), vect_vdep.end());
+        double min_ndon = *std::min_element(vect_donor_density.begin(), vect_donor_density.end());
+        double max_ndon = *std::max_element(vect_donor_density.begin(), vect_donor_density.end());
+        double min_ndon_border = *std::min_element(vect_donor_density_border.begin(), vect_donor_density_border.end());
+        double max_ndon_border = *std::max_element(vect_donor_density_border.begin(), vect_donor_density_border.end());
+        double min_ndon_inner = *std::min_element(vect_donor_density_inner.begin(), vect_donor_density_inner.end());
+        double max_ndon_inner = *std::max_element(vect_donor_density_inner.begin(), vect_donor_density_inner.end());
+        double min_cs = *std::min_element(vect_capacitance.begin(), vect_capacitance.end());
+        double max_cs = *std::max_element(vect_capacitance.begin(), vect_capacitance.end());
+        double min_cs_border = *std::min_element(vect_capacitance_border.begin(), vect_capacitance_border.end());
+        double max_cs_border = *std::max_element(vect_capacitance_border.begin(), vect_capacitance_border.end());
+        double min_cs_inner = *std::min_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
+        double max_cs_inner = *std::max_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
+
+        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 200, min_vdep, max_vdep); // histogram to store depletion voltages distribution
+        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, min_ndon, max_ndon); // histogram to store depletion voltages distribution
+        TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_border, max_ndon_border); // histogram to store depletion voltages distribution at borders
+        TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_inner, max_ndon_inner); // histogram to store depletion voltages distribution in inner channels
+        TH1F* hcs = new TH1F("hcs", "High voltage capacitance;Capacitance [pF];Entries", 200, min_cs, max_cs); // histogram to store depletion voltages distribution
+        TH1F* hcs_border = new TH1F("hcs_border", "High voltage capacitance at borders;Capacitance [pF];Entries", 200, min_cs_border, max_cs_border); // histogram to store depletion voltages distribution at borders
+        TH1F* hcs_inner = new TH1F("hcs_inner", "High voltage capacitance in inner channels;Capacitance [pF];Entries", 200, min_cs_inner, max_cs_inner); // histogram to store depletion voltages distribution in inner channels
+
+        for (const auto& val : vect_vdep) {
+            hVdep->Fill(val);
+        }
+        for (const auto& val : vect_donor_density) {
+            hndon->Fill(val);
+        }
+        for (const auto& val : vect_donor_density_border) {
+            hndon_border->Fill(val);
+        }
+        for (const auto& val : vect_donor_density_inner) {
+            hndon_inner->Fill(val);
+        }
+        for (const auto& val : vect_capacitance) {
+            hcs->Fill(val);
+        }
+        for (const auto& val : vect_capacitance_border) {
+            hcs_border->Fill(val);
+        }
+        for (const auto& val : vect_capacitance_inner) {
+            hcs_inner->Fill(val);
+        }
+        // set ranges for histogram
         float Vdep_mean = hVdep->GetMean();
         float Vdep_std = hVdep->GetStdDev();
-        hVdep->GetXaxis()->SetRangeUser(Vdep_mean - 1*Vdep_std, Vdep_mean + 1*Vdep_std);
+        cout<< "Vdep mean: " << Vdep_mean << ", Vdep std: " << hVdep->GetStdDev() << std::endl;
+        // hVdep->GetXaxis()->SetRangeUser(Vdep_mean - 1*Vdep_std, Vdep_mean + 1*Vdep_std);
+        // cout<< "Vdep mean after range: " << Vdep_mean << std::endl; // this does not change the mean, just the visualizationn range
         float ndon_border_mean = hndon_border->GetMean();
         float ndon_border_std = hndon_border->GetStdDev();
-        hndon_border->GetXaxis()->SetRangeUser(ndon_border_mean - 2*ndon_border_std, ndon_border_mean + 2*ndon_border_std);
+        cout<< "ndon border mean: " << ndon_border_mean << ", ndon border std: " << hndon_border->GetStdDev() << std::endl;
+        // hndon_border->GetXaxis()->SetRangeUser(ndon_border_mean - 2*ndon_border_std, ndon_border_mean + 2*ndon_border_std);
         float ndon_inner_mean = hndon_inner->GetMean();
         float ndon_inner_std = hndon_inner->GetStdDev();
-        hndon_inner->GetXaxis()->SetRangeUser(ndon_inner_mean - 2*ndon_inner_std, ndon_inner_mean + 2*ndon_inner_std);
+        cout<< "ndon inner mean: " << ndon_inner_mean << ", ndon inner std: " << hndon_inner->GetStdDev() << std::endl;
+        // hndon_inner->GetXaxis()->SetRangeUser(ndon_inner_mean - 2*ndon_inner_std, ndon_inner_mean + 2*ndon_inner_std);
         float cs_border_mean = hcs_border->GetMean();
         float cs_border_std = hcs_border->GetStdDev();
-        hcs_border->GetXaxis()->SetRangeUser(cs_border_mean - 2*cs_border_std, cs_border_mean + 2*cs_border_std);
+        cout<< "cs border mean: " << cs_border_mean << ", cs border std: " << hcs_border->GetStdDev() << std::endl;
+        // hcs_border->GetXaxis()->SetRangeUser(cs_border_mean - 2*cs_border_std, cs_border_mean + 2*cs_border_std);
         float cs_inner_mean = hcs_inner->GetMean();
         float cs_inner_std = hcs_inner->GetStdDev();
-        hcs_inner->GetXaxis()->SetRangeUser(cs_inner_mean - 2*cs_inner_std, cs_inner_mean + 2*cs_inner_std);
+        cout<< "cs inner mean: " << cs_inner_mean << ", cs inner std: " << hcs_inner->GetStdDev() << std::endl;
+        // hcs_inner->GetXaxis()->SetRangeUser(cs_inner_mean - 2*cs_inner_std, cs_inner_mean + 2*cs_inner_std);
 
+        TH1F* hVdep_dist = new TH1F("hVdep_dist", "Depletion Voltage;V_{dep} [V];Entries", 20, Vdep_mean - 1*Vdep_std, Vdep_mean + 1*Vdep_std); // histogram to store depletion voltages distribution
+        TH1F* hndon_border_dist = new TH1F("hndon_border_dist", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 50, ndon_border_mean - 1*ndon_border_std, ndon_border_mean + 1*ndon_border_std); // histogram to store depletion voltages distribution at borders
+        TH1F* hndon_inner_dist = new TH1F("hndon_inner_dist", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 50, ndon_inner_mean - 1*ndon_inner_std, ndon_inner_mean + 1*ndon_inner_std); // histogram to store depletion voltages distribution in inner channels
+        TH1F* hcs_border_dist = new TH1F("hcs_border_dist", "High voltage capacitance at borders;Capacitance [pF];Entries", 50, cs_border_mean - 1*cs_border_std, cs_border_mean + 1*cs_border_std); // histogram to store depletion voltages distribution at borders
+        TH1F* hcs_inner_dist = new TH1F("hcs_inner_dist", "High voltage capacitance in inner channels;Capacitance [pF];Entries", 50, cs_inner_mean - 1*cs_inner_std, cs_inner_mean + 1*cs_inner_std); // histogram to store depletion voltages distribution in inner channels
+
+        // Fill the histogram with each value in the vector
+        for (const auto& val : vect_vdep) {
+            hVdep_dist->Fill(val);
+        }
+        for (const auto& val : vect_donor_density_border) {
+            hndon_border_dist->Fill(val);
+        }
+        for (const auto& val : vect_donor_density_inner) {
+            hndon_inner_dist->Fill(val);
+        }
+        for (const auto& val : vect_capacitance_border) {
+            hcs_border_dist->Fill(val);
+        }
+        for (const auto& val : vect_capacitance_inner) {
+            hcs_inner_dist->Fill(val);
+        }
+
+        float Vdep_dist_mean = hVdep_dist->GetMean();
+        float Vdep_dist_std = hVdep_dist->GetStdDev();
+        cout << "Vdep distribution mean: " << Vdep_dist_mean << ", Vdep distribution std: " << Vdep_dist_std << std::endl;
+        float ndon_border_dist_mean = hndon_border_dist->GetMean();
+        float ndon_border_dist_std = hndon_border_dist->GetStdDev();
+        cout << "ndon border distribution mean: " << ndon_border_dist_mean << ", ndon border distribution std: " << ndon_border_dist_std << std::endl;
+        float ndon_inner_dist_mean = hndon_inner_dist->GetMean();
+        float ndon_inner_dist_std = hndon_inner_dist->GetStdDev();
+        cout << "ndon inner distribution mean: " << ndon_inner_dist_mean << ", ndon inner distribution std: " << ndon_inner_dist_std << std::endl;
+        float cs_border_dist_mean = hcs_border_dist->GetMean();
+        float cs_border_dist_std = hcs_border_dist->GetStdDev();
+        cout << "cs border distribution mean: " << cs_border_dist_mean << ", cs border distribution std: " << cs_border_dist_std << std::endl;
+        float cs_inner_dist_mean = hcs_inner_dist->GetMean();
+        float cs_inner_dist_std = hcs_inner_dist->GetStdDev();
+        cout << "cs inner distribution mean: " << cs_inner_dist_mean << ", cs inner distribution std: " << cs_inner_dist_std << std::endl;
+
+        TH1F* hndon_border_dist2 = new TH1F("hndon_border_dist2", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 20, ndon_border_dist_mean - 1*ndon_border_dist_std, ndon_border_dist_mean + 1*ndon_border_dist_std); // histogram to store depletion voltages distribution at borders
+        // TH1F* hndon_inner_dist2 = new TH1F("hndon_inner_dist2", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 50, ndon_inner_dist_mean - 1*ndon_inner_dist_std, ndon_inner_dist_mean + 1*ndon_inner_dist_std); // histogram to store depletion voltages distribution in inner channels
+        TH1F* hcs_border_dist2 = new TH1F("hcs_border_dist2", "High voltage capacitance at borders;Capacitance [pF];Entries", 50, cs_border_dist_mean - 1*cs_border_dist_std, cs_border_dist_mean + 1*cs_border_dist_std); // histogram to store depletion voltages distribution at borders
+        TH1F* hcs_inner_dist2 = new TH1F("hcs_inner_dist2", "High voltage capacitance in inner channels;Capacitance [pF];Entries", 50, cs_inner_dist_mean - 1*cs_inner_dist_std, cs_inner_dist_mean + 1*cs_inner_dist_std); // histogram to store depletion voltages distribution in inner channels
+
+        for (const auto& val : vect_donor_density_border) {
+            hndon_border_dist2->Fill(val);
+        }
+        // for (const auto& val : vect_donor_density_inner) {
+        //     hndon_inner_dist2->Fill(val);
+        // }
+        for (const auto& val : vect_capacitance_border) {
+            hcs_border_dist2->Fill(val);
+        }
+        for (const auto& val : vect_capacitance_inner) {
+            hcs_inner_dist2->Fill(val);
+        }
+        float ndon_border_dist_mean2 = hndon_border_dist2->GetMean();
+        float ndon_border_dist_std2 = hndon_border_dist2->GetStdDev();
+        cout << "ndon border distribution mean2: " << ndon_border_dist_mean2
+        << ", ndon border distribution std2: " << ndon_border_dist_std2 << std::endl;
+        // float ndon_inner_dist_mean2 = hndon_inner_dist2->GetMean();
+        // float ndon_inner_dist_std2 = hndon_inner_dist2->GetStdDev();
+        // cout << "ndon inner distribution mean2: " << ndon_inner_dist_mean2
+        // << ", ndon inner distribution std2: " << ndon_inner_dist_std2 << std::endl;
+        float cs_border_dist_mean2 = hcs_border_dist2->GetMean();
+        float cs_border_dist_std2 = hcs_border_dist2->GetStdDev();
+        cout << "cs border distribution mean2: " << cs_border_dist_mean2
+        << ", cs border distribution std2: " << cs_border_dist_std2 << std::endl;
+        float cs_inner_dist_mean2 = hcs_inner_dist2->GetMean();
+        float cs_inner_dist_std2 = hcs_inner_dist2->GetStdDev();
+        cout << "cs inner distribution mean2: " << cs_inner_dist_mean2
+        << ", cs inner distribution std2: " << cs_inner_dist_std2 << std::endl;
+
+        
         hVdep_map->SetMinimum(Vdep_mean - 1*Vdep_std);
         hVdep_map->SetMaximum(Vdep_mean + 1*Vdep_std);
-        hndon_map->SetMinimum(ndon_inner_mean - 2*ndon_inner_std);
-        hndon_map->SetMaximum(ndon_border_mean + 2*ndon_border_std);
-        hcs_plateau_map->SetMinimum(cs_inner_mean - 2*cs_inner_std);
-        hcs_plateau_map->SetMaximum(cs_border_mean + 2*cs_border_std);
-        // hcs_plateau_map->SetMinimum(cs_mean - 2*cs_std);
-        // hcs_plateau_map->SetMaximum(cs_mean + 2*cs_std);
+        hndon_map->SetMinimum(ndon_inner_dist_mean - 2*ndon_inner_dist_std);
+        hndon_map->SetMaximum(ndon_border_dist_mean + 1*ndon_border_dist_std);
+        hcs_plateau_map->SetMinimum(cs_inner_dist_mean - 1*cs_inner_dist_std);
+        hcs_plateau_map->SetMaximum(cs_border_dist_mean + 1*cs_border_dist_std);
+
+
+
+
 
         //Apart from ranges, also find weird chi2 values and fill histogram with them
         // float chi2_min = hchi2->GetXaxis()->GetXmin();
@@ -577,8 +721,6 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         // capacitance
         auto ccsplat = new TCanvas("ccsplat", "Canvas", 600, 600);
         ccsplat->cd();
-        hcs_plateau_map->SetMinimum(4.4);
-        hcs_plateau_map->SetMaximum(5.9);
         hcs_plateau_map->Draw("COLZ");
         hcs_plateau_map->GetZaxis()->SetTitle("Capacitance [pF]");
         channel_name->Draw("text same");
@@ -609,10 +751,22 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         cndon->Write();
         ccsplat->Write();
         cchi2sus->Write();
+
+        hVdep_dist->Write(); // write histogram with depletion voltages distribution
+        hndon_border_dist->Write(); // write histogram with donor density at borders distribution
+        hndon_inner_dist->Write(); // write histogram with donor density in inner channels distribution
+        hcs_border_dist->Write(); // write histogram with capacitance at borders distribution
+        hcs_inner_dist->Write(); // write histogram with capacitance in inner channels distribution
+        hndon_border_dist2->Write(); // write histogram with donor density at borders distribution
+        // hndon_inner_dist2->Write(); // write histogram with donor density in inner channels
+        hcs_border_dist2->Write(); // write histogram with capacitance at borders distribution
+        hcs_inner_dist2->Write(); // write histogram with capacitance in inner channels distribution
     } // end isCV
     
 
 
+
+    
     
     else {
         cout << "Processing IV data...\n";
@@ -682,7 +836,7 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             return -1;
         }
         n_ch = channel->size();
-        cout<<"Number of channels: " << n_ch << endl;
+        // cout<<"Number of channels: " << n_ch << endl;
         
         for (int indx = 0; indx < n_ch; ++indx) { // loop over all channels
 
@@ -701,11 +855,11 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             if (CSIS) {
                 // map CSIS channels to sensor channels
                 ch = CSIS_ch_map[channel->at(indx)-1];
-                printf("Channel: %d\n", ch);
+                // printf("Channel: %d\n", ch);
             } else {
                 // use channel number as is
                 ch = channel->at(indx);
-                printf("Channel: %d\n", ch);
+                // printf("Channel: %d\n", ch);
             }
             if (ch < 1 || ch > 256) {
                 std::cerr << "Error: Channel number out of range (1-256): " << ch << std::endl;
