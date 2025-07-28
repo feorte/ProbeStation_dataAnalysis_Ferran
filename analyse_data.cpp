@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "20", std::string type = "IV")
+int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
@@ -570,7 +570,9 @@ int analyse_data(std::string number_sensor = "20", std::string type = "IV")
         // set ranges for histogram
         float Vdep_mean = hVdep->GetMean();
         float Vdep_std = hVdep->GetStdDev();
-        // cout<< "Vdep mean: " << Vdep_mean << ", Vdep std: " << hVdep->GetStdDev() << std::endl;
+        float Vdep_sumofweights = hVdep->GetSumOfWeights();
+
+        cout<< "Vdep mean: " << Vdep_mean << ", Vdep std: " << hVdep->GetStdDev() << ", Vdep sum of weights: " << Vdep_sumofweights << std::endl;
         // hVdep->GetXaxis()->SetRangeUser(Vdep_mean - 1*Vdep_std, Vdep_mean + 1*Vdep_std);
         // cout<< "Vdep mean after range: " << Vdep_mean << std::endl; // this does not change the mean, just the visualizationn range
         float ndon_border_mean = hndon_border->GetMean();
@@ -621,21 +623,25 @@ int analyse_data(std::string number_sensor = "20", std::string type = "IV")
             hcs_inner_dist->Fill(val);
         }
 
-        float Vdep_dist_mean = hVdep_dist->GetMean();
-        float Vdep_dist_std = hVdep_dist->GetStdDev();
-        cout << "Vdep distribution mean: " << Vdep_dist_mean << ", Vdep distribution std: " << Vdep_dist_std << std::endl;
+        // float Vdep_dist_mean = hVdep_dist->GetMean();
+        // float Vdep_dist_std = hVdep_dist->GetStdDev();
+        // cout << "Vdep distribution mean: " << Vdep_dist_mean << ", Vdep distribution std: " << Vdep_dist_std << std::endl;
         float ndon_border_dist_mean = hndon_border_dist->GetMean();
         float ndon_border_dist_std = hndon_border_dist->GetStdDev();
-        cout << "ndon border distribution mean: " << ndon_border_dist_mean << ", ndon border distribution std: " << ndon_border_dist_std << std::endl;
+        float ndon_border_sumofweights = hndon_border_dist->GetSumOfWeights();
+        cout << "ndon border distribution mean: " << ndon_border_dist_mean << ", ndon border distribution std: " << ndon_border_dist_std << ", sum of weights: " << ndon_border_sumofweights << std::endl;
         float ndon_inner_dist_mean = hndon_inner_dist->GetMean();
         float ndon_inner_dist_std = hndon_inner_dist->GetStdDev();
-        cout << "ndon inner distribution mean: " << ndon_inner_dist_mean << ", ndon inner distribution std: " << ndon_inner_dist_std << std::endl;
+        float ndon_inner_sumofweights = hndon_inner_dist->GetSumOfWeights();
+        cout << "ndon inner distribution mean: " << ndon_inner_dist_mean << ", ndon inner distribution std: " << ndon_inner_dist_std << ", sum of weights: " << ndon_inner_sumofweights << std::endl;
         float cs_border_dist_mean = hcs_border_dist->GetMean();
         float cs_border_dist_std = hcs_border_dist->GetStdDev();
-        // cout << "cs border distribution mean: " << cs_border_dist_mean << ", cs border distribution std: " << cs_border_dist_std << std::endl;
+        float cs_border_sumofweights = hcs_border_dist->GetSumOfWeights();
+        cout << "cs border distribution mean: " << cs_border_dist_mean << ", cs border distribution std: " << cs_border_dist_std << ", sum of weights: " << cs_border_sumofweights << std::endl;
         float cs_inner_dist_mean = hcs_inner_dist->GetMean();
         float cs_inner_dist_std = hcs_inner_dist->GetStdDev();
-        // cout << "cs inner distribution mean: " << cs_inner_dist_mean << ", cs inner distribution std: " << cs_inner_dist_std << std::endl;
+        float cs_inner_sumofweights = hcs_inner_dist->GetSumOfWeights();
+        cout << "cs inner distribution mean: " << cs_inner_dist_mean << ", cs inner distribution std: " << cs_inner_dist_std << ", sum of weights: " << cs_inner_sumofweights << std::endl;
 
         // TH1F* hndon_border_dist2 = new TH1F("hndon_border_dist2", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 20, ndon_border_dist_mean - 1*ndon_border_dist_std, ndon_border_dist_mean + 1*ndon_border_dist_std); // histogram to store depletion voltages distribution at borders
         // TH1F* hndon_inner_dist2 = new TH1F("hndon_inner_dist2", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 50, ndon_inner_dist_mean - 1*ndon_inner_dist_std, ndon_inner_dist_mean + 1*ndon_inner_dist_std); // histogram to store depletion voltages distribution in inner channels
@@ -666,18 +672,34 @@ int analyse_data(std::string number_sensor = "20", std::string type = "IV")
         // float ndon_inner_dist_std2 = hndon_inner_dist2->GetStdDev();
         // cout << "ndon inner distribution mean2: " << ndon_inner_dist_mean2
         // << ", ndon inner distribution std2: " << ndon_inner_dist_std2 << std::endl;
-        float cs_border_dist_mean2 = hcs_border_dist2->GetMean();
-        float cs_border_dist_std2 = hcs_border_dist2->GetStdDev();
-        cout << "cs border distribution mean2: " << cs_border_dist_mean2
-        << ", cs border distribution std2: " << cs_border_dist_std2 << std::endl;
-        float cs_inner_dist_mean2 = hcs_inner_dist2->GetMean();
-        float cs_inner_dist_std2 = hcs_inner_dist2->GetStdDev();
-        cout << "cs inner distribution mean2: " << cs_inner_dist_mean2
-        << ", cs inner distribution std2: " << cs_inner_dist_std2 << std::endl;
+        // float cs_border_dist_mean2 = hcs_border_dist2->GetMean();
+        // float cs_border_dist_std2 = hcs_border_dist2->GetStdDev();
+        // cout << "cs border distribution mean2: " << cs_border_dist_mean2
+        // << ", cs border distribution std2: " << cs_border_dist_std2 << std::endl;
+        // float cs_inner_dist_mean2 = hcs_inner_dist2->GetMean();
+        // float cs_inner_dist_std2 = hcs_inner_dist2->GetStdDev();
+        // cout << "cs inner distribution mean2: " << cs_inner_dist_mean2
+        // << ", cs inner distribution std2: " << cs_inner_dist_std2 << std::endl;
 
-        
-        hVdep_map->SetMinimum(Vdep_mean - 1*Vdep_std);
-        hVdep_map->SetMaximum(Vdep_mean + 1*Vdep_std);
+        if (number_sensor == "16" || number_sensor == "17" || number_sensor == "18") // for last sensors
+        {
+            cout<<"last sensors"<<std::endl;
+            hVdep_map->SetMinimum(Vdep_mean - 1*Vdep_std);
+            hVdep_map->SetMaximum(Vdep_mean + 1*Vdep_std);
+        }
+        else if (number_sensor == "20") // for sensor 19
+        {
+            cout<<"sensor 20"<<std::endl;
+            hVdep_map->SetMinimum(Vdep_mean - 0.5*Vdep_std);
+            hVdep_map->SetMaximum(Vdep_mean + 0.5*Vdep_std);
+        }
+        else
+        {
+            hVdep_map->SetMinimum(Vdep_mean - 2*Vdep_std);
+            hVdep_map->SetMaximum(Vdep_mean + 2*Vdep_std);
+        }
+
+
         hndon_map->SetMinimum(ndon_inner_dist_mean - 2*ndon_inner_dist_std);
         hndon_map->SetMaximum(ndon_border_dist_mean + 1*ndon_border_dist_std);
         hcs_plateau_map->SetMinimum(cs_inner_dist_mean - 1*cs_inner_dist_std);
@@ -983,7 +1005,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "IV")
         float curr_mean_inner_zoom = hcurr_inner_zoom->GetMean();
         float curr_std_inner_zoom = hcurr_inner_zoom->GetStdDev();
         cout << "Current in inner channels zoomed mean: " << curr_mean_inner_zoom << ", Current in inner channels zoomed std: " << curr_std_inner_zoom << std::endl;
-
+  
 
         hcurr_map->SetMinimum(curr_mean_inner - 1*curr_std_inner);
         hcurr_map->SetMaximum(curr_mean_border + 1*curr_std_border);
