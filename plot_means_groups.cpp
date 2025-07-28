@@ -99,7 +99,7 @@ void plot_means_groups() {
     TGraphErrors *gI_inner  = new TGraphErrors(n, x, I_inner, 0, I_inner_std);
     gI_border->SetMarkerColor(kBlue);     gI_border->SetLineColor(kBlue); gI_border->SetMarkerStyle(20);
     gI_inner->SetMarkerColor(kRed);       gI_inner->SetLineColor(kRed);   gI_inner->SetMarkerStyle(21);
-    gI_border->SetTitle("Mean current at 120 V (one zoom);Channel;I [nA]");
+    gI_border->SetTitle("Mean current at 120 V (one zoom);Channel;Current [nA]");
 
     // Adjust y-axis range to include all points + margin
     double I_min = std::min(*std::min_element(I_border, I_border + n), *std::min_element(I_inner, I_inner + n));
@@ -120,8 +120,8 @@ void plot_means_groups() {
     auto leg1 = new TLegend(0.15, 0.77, 0.4, 0.9);
     leg1->AddEntry(gI_border, "border", "lep");
     leg1->AddEntry(gI_inner, "inner", "lep");
-    leg1->AddEntry(l1b, "mean border", "l");
-    leg1->AddEntry(l1i, "mean inner", "l");
+    leg1->AddEntry(l1b, Form("mean border = %.2f", m1b), "l");
+    leg1->AddEntry(l1i, Form("mean inner = %.2f", m1i), "l");
     leg1->Draw();
 
     // 2. I two zooms
@@ -134,7 +134,7 @@ void plot_means_groups() {
     gI_innerz->SetMarkerColor(kOrange + 7);
     gI_innerz->SetLineColor(kOrange + 7);
     gI_innerz->SetMarkerStyle(23);
-    gI_borderz->SetTitle("Mean current at 120 V (two zooms);Channel;I [nA]");
+    gI_borderz->SetTitle("Mean current at 120 V (two zooms);Channel;Current [nA]");
 
     double I2_min = std::min(*std::min_element(I_border_zoom, I_border_zoom + n), *std::min_element(I_inner_zoom, I_inner_zoom + n));
     double I2_max = std::max(*std::max_element(I_border_zoom, I_border_zoom + n), *std::max_element(I_inner_zoom, I_inner_zoom + n));
@@ -152,10 +152,10 @@ void plot_means_groups() {
     l2i->SetLineStyle(2);
     l2i->Draw();
     auto leg2 = new TLegend(0.15, 0.77, 0.4, 0.9);
-    leg2->AddEntry(gI_borderz, "border zoom", "lep");
-    leg2->AddEntry(gI_innerz, "inner zoom", "lep");
-    leg2->AddEntry(l2b, "mean border", "l");
-    leg2->AddEntry(l2i, "mean inner", "l");
+    leg2->AddEntry(gI_borderz, "border", "lep");
+    leg2->AddEntry(gI_innerz, "inner", "lep");
+    leg2->AddEntry(l2b, Form("mean border = %.2f", m2b), "l");
+    leg2->AddEntry(l2i, Form("mean inner = %.2f", m2i), "l");
     leg2->Draw();
 
     // 3. Vdep
@@ -176,7 +176,7 @@ void plot_means_groups() {
     l3v->Draw();
     auto leg3 = new TLegend(0.15, 0.83, 0.35, 0.93);
     leg3->AddEntry(gVdep, "mean values", "lep");
-    leg3->AddEntry(l3v, "mean", "l");
+    leg3->AddEntry(l3v, Form("mean = %.2f",mVdep), "l");
     leg3->Draw();
 
     // 4. cs (pF)
@@ -230,10 +230,10 @@ void plot_means_groups() {
     auto leg4 = new TLegend(0.15, 0.77, 0.48, 0.9);
     leg4->AddEntry(gcsb, "border", "lep");
     leg4->AddEntry(gcsi, "inner", "lep");
-    leg4->AddEntry(l4bA, "mean border group 9,10,13,14,20", "l");
-    leg4->AddEntry(l4bB, "mean border group 15,16,17,18", "l");
-    leg4->AddEntry(l4iA, "mean inner group 9,10,13,14,20", "l");
-    leg4->AddEntry(l4iB, "mean inner group 15,16,17,18", "l");
+    leg4->AddEntry(l4bA, Form("mean border channels 9,10,13,14,20 = %.2f",mcsbA), "l");
+    leg4->AddEntry(l4bB, Form("mean border channels 15,16,17,18 = %.2f",mcsbB), "l");
+    leg4->AddEntry(l4iA, Form("mean inner channels 9,10,13,14,20 = %.2f",mcsiA), "l");
+    leg4->AddEntry(l4iB, Form("mean inner channels 15,16,17,18 = %.2f",mcsiB), "l");
     leg4->Draw();
 
     // 5. ndon (ne/cm^3)
@@ -283,10 +283,10 @@ void plot_means_groups() {
     auto leg5 = new TLegend(0.55, 0.77, 0.9, 0.9);
     leg5->AddEntry(gndb, "border", "lep");
     leg5->AddEntry(gndi, "inner", "lep");
-    leg5->AddEntry(l5bA, "mean border group 9,10,13,14,20", "l");
-    leg5->AddEntry(l5bB, "mean border group 15,16,17,18", "l");
-    leg5->AddEntry(l5iA, "mean inner group 9,10,13,14,20", "l");
-    leg5->AddEntry(l5iB, "mean inner group 15,16,17,18", "l");
+    leg5->AddEntry(l5bA, Form("mean border channels 9,10,13,14,20 = %.2e",mndbA), "l");
+    leg5->AddEntry(l5bB, Form("mean border channels 15,16,17,18 = %.2e",mndbB), "l");
+    leg5->AddEntry(l5iA, Form("mean inner channels 9,10,13,14,20 = %.2e",mndiA), "l");
+    leg5->AddEntry(l5iB, Form("mean inner channels 15,16,17,18 = %.2e",mndiB), "l");
     leg5->Draw();
 
     TFile* f = new TFile("all_sensors_results.root", "RECREATE");
