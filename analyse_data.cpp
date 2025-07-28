@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "17", std::string type = "IV")
+int analyse_data(std::string number_sensor = "20", std::string type = "IV")
 {
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
     
