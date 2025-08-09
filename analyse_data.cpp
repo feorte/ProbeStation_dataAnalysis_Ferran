@@ -65,19 +65,20 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 
 int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 {
+    cout<< "Analysing data for sensor: " << number_sensor << ", type: " << type << endl;
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
-    
+
     // ------------------------------------Load data from tree---------------------------------------------------
 
     // std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
     bool CSIS = false; // set to true if the data is from CSIS, false if from CSIS2
     int CSIS_ch_map[264] = {48,208,192,240,224,144,128,176,160,80,64,112,96,256,16,32,47,207,191,239,223,143,127,175,159,79,63,111,95,255,15,31,46,206,190,238,222,142,126,174,158,78,62,110,94,254,14,30,45,205,189,237,221,141,125,173,157,77,61,109,93,253,13,29,44,204,188,236,220,140,124,172,156,76,60,108,92,252,12,28,43,203,187,235,219,139,123,171,155,75,59,107,91,251,11,27,42,202,186,234,218,138,122,170,154,74,58,106,90,250,10,26,41,201,185,233,217,137,121,169,153,73,57,105,89,249,9,25,40,200,184,232,216,136,120,168,152,72,56,104,88,248,8,24,39,199,183,231,215,135,119,167,151,71,55,103,87,247,7,23,38,198,182,230,214,134,118,166,150,70,54,102,86,246,6,22,37,197,181,229,213,133,117,165,149,69,53,101,85,245,5,21,36,196,180,228,212,132,116,164,148,68,52,100,84,244,4,20,35,195,179,227,211,131,115,163,147,67,51,99,83,243,3,19,34,194,178,226,210,130,114,162,146,66,50,98,82,242,2,18,33,193,177,225,209,129,113,161,145,65,49,97,81,241,1,17};
-    
+
     std::vector<int> border_channels = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
                                         17,32,33,48,64,65,80,81,96,97,112,113,128,129,144,145,160,161,176,177,192,193,208,209,224,225,240,241,
                                         241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256}; // borders of channels in the sensor
-    
+
                                         // Load ROOT file with data
     auto file = std::unique_ptr<TFile>(TFile::Open(storingfile.c_str()));
     if (!file || file->IsZombie()) {
@@ -135,44 +136,50 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         tree_systCap->SetBranchAddress("cs_uncorr", &cs_syst);
         tree_systCap->SetBranchAddress("cs_err", &cs_syst_err);
 
+// // Check if data in variable cs is in fact from branch cs_uncorr
+//         for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
+//             // load the data for the given tree entry
+//             tree_data->GetEntry(iEntry);
+//             cout << cs->at(0)<< std::endl;
+//         }
+
         // ------------------------------------Create histograms---------------------------------------------------
 
         // 1D histograms to store depletion voltages and donor density distributions
-        TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+        TH1F* hVdepxch = new TH1F("hVdepxch", "Depletion Voltage per Channel;Channel;V_{dep} [V]", 264, 0.5, 264.5); // histogram to store depletion voltages per channel
         // TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 200, 17, 80); // histogram to store depletion voltages distribution
-        TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+        TH1F* hndonxch = new TH1F("hndonxch", "Donnor density per Channel;Channel;Donnor density [ne/cm^{3}]", 264, 0.5, 264.5); // histogram to store depletion voltages per channel
         // TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution
         // TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution at borders
         // TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, 3e+10, 1e+12); // histogram to store depletion voltages distribution in inner channels
-        TH1F* hcsxch = new TH1F("hcsxch", "Full depletion capacitance per Channel;Channel;Capacitance [pF]", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+        TH1F* hcsxch = new TH1F("hcsxch", "Full depletion capacitance per Channel;Channel;Capacitance [pF]", 264, 0.5, 264.5); // histogram to store depletion voltages per channel
         // TH1F* hcs = new TH1F("hcs", "Full depletion capacitance;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution
         // TH1F* hcs_border = new TH1F("hcs_border", "Full depletion capacitance at borders;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution at borders
         // TH1F* hcs_inner = new TH1F("hcs_inner", "Full depletion capacitance in inner channels;Capacitance [pF];Entries", 50, 5.2, 6.2); // histogram to store depletion voltages distribution in inner channels
-        TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 256, 0.5, 256.5); // histogram to store depletion voltages per channel
+        TH1F* hchi2xch = new TH1F("hchi2xch", "Global chi2 per Channel;Channel;Chi2", 264, 0.5, 264.5); // histogram to store depletion voltages per channel
         TH1F* hchi2 = new TH1F("hchi2","Global chi2;Chi2;Entries", 150, 0, 2e5); //histogram to store global chi2 values
         std::vector<float> chi2_glob; // vector to store global chi2 values
 
         // 2D histogram to store capacitance, depletion voltage and donor density of every channel
-        auto hVdep_map = new TH2F("hVdep_map",Form("Depletion Voltage for sensor %s;X;Y",number_sensor.c_str()),
-            16,0.5,16.5,  // X axis
-            16,0.5,16.5); // Y axis
-        auto hndon_map = new TH2F("hndon_map",Form("Donnor density for sensor %s;X;Y",number_sensor.c_str()),
-            16,0.5,16.5,  // X axis
-            16,0.5,16.5); // Y axis
-        auto hcs_plateau_map = new TH2F("hcs_plateau_map",Form("Full depletion capacitance for sensor %s;X;Y",number_sensor.c_str()),
-            16,0.5,16.5,  // X axis
-            16,0.5,16.5); // Y axis
-        auto hchi2sus = new TH2F("hchi2sus","Weird chi2;X;Y", 16,0.5,16.5, 16,0.5,16.5); //chi2 suspicius
+        // Update 2D histograms to 24x16 (was 16x16)
+        auto hVdep_map = new TH2F("hVdep_map", Form("Depletion Voltage for sensor %s;X;Y", number_sensor.c_str()), 16, 0.5, 16.5, 16, 0.5, 16.5);
+        auto hndon_map = new TH2F("hndon_map", Form("Donnor density for sensor %s;X;Y", number_sensor.c_str()), 16, 0.5, 16.5, 16, 0.5, 16.5);
+        auto hcs_plateau_map = new TH2F("hcs_plateau_map", Form("Full depletion capacitance for sensor %s;X;Y", number_sensor.c_str()), 16, 0.5, 16.5, 16, 0.5, 16.5);
+        auto hchi2sus = new TH2F("hchi2sus", "Weird chi2;X;Y", 16, 0.5, 16.5, 16, 0.5, 16.5);
 
-
-        //2D histogram that maps channels to positions on the sensor
-        auto channel_name = new TH2F("channel_name","Sensor pixels;X;Y", 16,0.5,16.5, 16,0.5,16.5);
-        // fill it with channel numbers
-        for (int i = 1; i < 17; ++i) {
-            for (int j = 1; j < 17; ++j) {
-                channel_name->Fill(i, j, i+16*(j-1));
+        // channel name map
+        auto channel_name = new TH2F("channel_name", "Sensor pixels;X;Y", 16, 0.5, 16.5, 16, 0.5, 16.5);
+        // Fill full range: 1–264 with channels numbers
+        for (int j = 1; j <= 16; ++j) {
+            for (int i = 1; i <= 16; ++i) {
+                channel_name->Fill(i, j, i + 16 * (j - 1));
             }
         }
+
+        // // Add channels 257–264 at positions (17–24, 16)
+        // for (int i = 0; i < 8; ++i) {
+        //     channel_name->Fill(17 + i, 16, 257 + i);
+        // }
 
         // --------------------Open file to store graphs, fits and histograms-------------------
 
@@ -181,7 +188,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         // results root files
         std:: string results_file = "results/CV_" + number_sensor + ".root";
         std::unique_ptr<TFile> myFile( TFile::Open(results_file.c_str(), "RECREATE") );
-        // Create directories inside root file 
+        // Create directories inside root file
         TDirectory* dirCV = myFile->mkdir("CV_graphs");
         TDirectory* dirDepletion = myFile->mkdir("Depletion_voltage");
         TDirectory* dirDonnor = myFile->mkdir("Donnor_density");
@@ -248,8 +255,8 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
                 // printf("Channel: %d\n", ch);
             }
 
-            if (ch < 1 || ch > 256) {
-                std::cerr << "Error: Channel number out of range (1-256): " << ch << std::endl;
+            if (ch < 1 || ch > 264) {
+                std::cerr << "Error: Channel number out of range (1-264): " << ch << std::endl;
                 continue; // skip this channel
             }
 
@@ -360,29 +367,39 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
                 hchi2xch->SetBinContent(indx+1, chi2_lfit + chi2_rfit); // store chi2 value in histogram
             } else {
                 std::cerr << "Warning: Skipping invalid chi2_glob for channel index " << indx+1 << std::endl;
-                //hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1); 
+                //hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1);
             }
             hchi2->Fill(chi2_lfit + chi2_rfit); // store chi2 value in histogram
-            
-            //store capacitance in histograms
-            hcsxch->SetBinContent(indx+1, std::exp(p0_2)); // channel index starts at 0
-            // hcs->Fill(std::exp(p0_2));
-            vect_capacitance.push_back(std::exp(p0_2));
-            // store capacitance of the right plateau of CV in 2D histogram
-            hcs_plateau_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                        , ((ch-1)/16)+1 // Y position
-                        , std::exp(p0_2)); // value of constant line in V
+
 
             // check if channel is at the border or in the inner part of the sensor
             bool is_border = std::find(border_channels.begin(), border_channels.end(), ch) != border_channels.end();
-            if (is_border) {
-                // hcs_border->Fill(std::exp(p0_2)); // fill histogram with capacitance at borders
-                vect_capacitance_border.push_back(std::exp(p0_2));
+
+            int x_pos = ((ch - 1) % 16) + 1;
+            int y_pos = ((ch - 1) / 16) + 1;
+            // Add condition for channels > 256
+            if (ch >= 257 && ch <= 264) {
+                x_pos = 17 + (ch - 257); // 17 to 24
+                y_pos = 16;
             }
-            else {
-                // hcs_inner->Fill(std::exp(p0_2)); // fill histogram with capacitance in inner channels
-                vect_capacitance_inner.push_back(std::exp(p0_2));
+
+            if (ch >= 1 || ch <= 256) {
+                hcs_plateau_map->Fill(x_pos, y_pos, std::exp(p0_2));
+                // hcs->Fill(std::exp(p0_2));
+                vect_capacitance.push_back(std::exp(p0_2));
+                // store capacitance of the right plateau of CV in 2D histogram
+                if (is_border) {
+                    // hcs_border->Fill(std::exp(p0_2)); // fill histogram with capacitance at borders
+                    vect_capacitance_border.push_back(std::exp(p0_2));
+                }
+                else {
+                    // hcs_inner->Fill(std::exp(p0_2)); // fill histogram with capacitance in inner channels
+                    vect_capacitance_inner.push_back(std::exp(p0_2));
+                }
             }
+
+            //store capacitance in histograms
+            hcsxch->SetBinContent(indx+1, std::exp(p0_2)); // channel index starts at 0
 
                     // // lets try to do the fit directly on CV (no log scale)
                     // TF1* rfit2 = new TF1("rfit2", "pol0", x[n_volt-6], x[n_volt-1]);
@@ -393,16 +410,17 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 
             // store depletion voltage in histograms
             // hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
-            if (!std::isnan(V_dep) && std::isfinite(V_dep)) {
-                hVdepxch->SetBinContent(indx+1, V_dep);
-            } else {
-                std::cerr << "Warning: Skipping invalid V_dep for channel index " << indx+1 << std::endl; 
+
+            if (ch >= 1 || ch <= 256) {
+                hVdep_map->Fill(x_pos, y_pos, V_dep);
+                vect_vdep.push_back(V_dep); // store depletion voltage in vector
             }
-            // hVdep->Fill(V_dep); // fill histogram with depletion voltage
-            vect_vdep.push_back(V_dep); // store depletion voltage in vector
-            hVdep_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                            , ((ch-1)/16)+1 // Y position
-                            , V_dep); // fill 2D histogram with depletion voltage
+
+            if (!std::isnan(V_dep) && std::isfinite(V_dep)) {
+                    hVdepxch->SetBinContent(indx+1, V_dep);
+                } else {
+                    std::cerr << "Warning: Skipping invalid V_dep for channel index " << indx+1 << std::endl;
+            }
 
             // draw depletion voltage line
             TLine* line = new TLine(log_Vdep, glog->GetYaxis()->GetXmin(), log_Vdep, glog->GetYaxis()->GetXmax());
@@ -458,7 +476,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             // draw graph
             gnew->SetMarkerStyle(20);
             gnew->SetMarkerSize(0.8);
-            gnew->SetMarkerColor(kBlue+2);  
+            gnew->SetMarkerColor(kBlue+2);
             gnew->GetXaxis()->SetTitleFont(42);
             gnew->GetYaxis()->SetTitleFont(42);
             gnew->GetXaxis()->SetLabelFont(42);
@@ -487,22 +505,24 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             double donor_density = (2)/(e*eps*std::pow(A,2)*p1_don)*1e-6; //donor density in [number elctrons*cm^{-3}]
             // std::cout << "Donnor density = " << donor_density << " ne*cm^{-3}" << std::endl;
 
+            if (ch >= 1 || ch <= 256) {
+
+                hndon_map->Fill(x_pos, y_pos, donor_density);
+                // already checked if channel is at the border or in the inner part of the sensor
+                if (is_border) {
+                    // hndon_border->Fill(donor_density); // fill histogram with donor density at borders
+                    vect_donor_density_border.push_back(donor_density); // store donor density at borders in vector
+                } else {
+                    // hndon_inner->Fill(donor_density); // fill histogram with donor density in inner channels
+                    vect_donor_density_inner.push_back(donor_density); // store donor density in inner channels in vector
+                }
+
+                // hndon->Fill(donor_density);
+                vect_donor_density.push_back(donor_density); // store donor density in vector
+            }
+
             // fill histogram with donor density
             hndonxch->SetBinContent(indx+1, donor_density); // channel index starts at 0
-            // hndon->Fill(donor_density);
-            vect_donor_density.push_back(donor_density); // store donor density in vector
-            hndon_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                            , ((ch-1)/16)+1 // Y position
-                            , donor_density); // fill 2D histogram with depletion voltage
-
-            // already checked if channel is at the border or in the inner part of the sensor
-            if (is_border) {
-                // hndon_border->Fill(donor_density); // fill histogram with donor density at borders
-                vect_donor_density_border.push_back(donor_density); // store donor density at borders in vector
-            } else {
-                // hndon_inner->Fill(donor_density); // fill histogram with donor density in inner channels
-                vect_donor_density_inner.push_back(donor_density); // store donor density in inner channels in vector
-            }
 
             dirCV->cd();
             g->Write();
@@ -734,7 +754,17 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             // if (chi2_glob[i] < chi2_mean - 2*chi2_std || chi2_glob[i] > chi2_mean + 2*chi2_std) {
             if (chi2_glob[i] < 10) {
                 // fill histogram with weird chi2 values
-                hchi2sus->Fill(((ch-1)%16)+1, ((ch-1)/16)+1, 1); 
+                int x_pos = ((ch - 1) % 16) + 1;
+                int y_pos = ((ch - 1) / 16) + 1;
+
+                // Add condition for channels > 256
+                if (ch >= 257 && ch <= 264) {
+                    x_pos = 17 + (ch - 257); // 17 to 24
+                    y_pos = 16;
+                }
+
+                hchi2sus->Fill(x_pos, y_pos, 1);
+
             }
         }
 
@@ -802,13 +832,65 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         hcs_dist2->Write(); // write histogram with capacitance distribution
         hcs_border_dist2->Write(); // write histogram with capacitance at borders distribution
         hcs_inner_dist2->Write(); // write histogram with capacitance in inner channels distribution
+
+
+        // --- Compute mean capacitance and donor density for channels 257 to 264 ---
+        double sum_ndon = 0.0;
+        int count = 0;
+        for (int ch = 257; ch <= 264; ++ch) {
+            double ndon = hndonxch->GetBinContent(ch);
+            if (ndon > 0) { // skip any invalid or empty bins
+                sum_ndon += ndon;
+                ++count;
+            }
+        }
+        if (count > 0) {
+            double mean_ndon = sum_ndon / count;
+            std::cout << "Mean donor density (channels 257–264): " << mean_ndon << " ne/cm^3" << std::endl;
+        } else {
+            std::cerr << "No valid data found for channels 257–264." << std::endl;
+        }
+
+        // --- Compute mean capacitance at high voltages (80V–200V) for channels 257–264 ---
+        double sum_cs_highV = 0.0;
+        int count_cs_highV = 0;
+
+        for (int ch_index = 0; ch_index < n_ch; ++ch_index) {
+            int ch;
+            if (CSIS) {
+                ch = CSIS_ch_map[channel->at(ch_index)-1];
+            } else {
+                ch = channel->at(ch_index);
+            }
+
+            if (ch < 257 || ch > 264) continue;
+
+            for (int iEntry = 0; tree_data->LoadTree(iEntry) >= 0; ++iEntry) {
+                tree_data->GetEntry(iEntry);
+                float v = voltage;
+                if (v >= 80 && v <= 200) {
+                    float cs_value = cs->at(ch_index) - cs_syst->at(ch_index); // subtract system capacitance
+                    sum_cs_highV += cs_value;
+                    count_cs_highV++;
+                }
+            }
+        }
+
+        if (count_cs_highV > 0) {
+            double mean_cs_highV = sum_cs_highV / count_cs_highV;
+            std::cout << "Mean capacitance (80–200 V) for channels 257–264: " << mean_cs_highV << " pF" << std::endl;
+        } else {
+            std::cerr << "No valid capacitance data found for channels 257–264 in 80–200 V range." << std::endl;
+        }
+
+
     } // end isCV
-    
 
 
 
-    
-    
+
+
+
     else {
         cout << "Processing IV data...\n";
         // Enable only required branches
@@ -828,7 +910,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         // ------------------------------------Create histograms---------------------------------------------------
         // Histograms for current at certain voltage
         int voltage_check = 120; // voltage for which current is measured
-        auto hcurrxch = new TH1F("hcurrxch", Form("Current per Channel at %d V;Channel;Current [nA]", voltage_check), 256, 0.5, 256.5); // histogram to store current per channel
+        auto hcurrxch = new TH1F("hcurrxch", Form("Current per Channel at %d V;Channel;Current [nA]", voltage_check), 264, 0.5, 264.5); // histogram to store current per channel
         auto hcurr_map = new TH2F("hcurr_map",Form("Current at %d V for sensor %s;X;Y", voltage_check, number_sensor.c_str()), 16,0.5,16.5, 16,0.5,16.5);
 
 
@@ -848,7 +930,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         // results root files
         std:: string results_file = "results/IV_" + number_sensor + ".root";
         std::unique_ptr<TFile> myFile( TFile::Open(results_file.c_str(), "RECREATE") );
-        // Create directories inside root file 
+        // Create directories inside root file
         TDirectory* dirIV = myFile->mkdir("IV_graphs");
 
         //------------------------------------LOOP over all channels: CV curves and fill histograms----------------------------------------
@@ -877,7 +959,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         }
         n_ch = channel->size();
         // cout<<"Number of channels: " << n_ch << endl;
-        
+
         std::vector<float> vect_current; // vector to store current values at given voltage
         std::vector<float> vect_current_inner; // vector to store current values at given voltage in inner channels
         std::vector<float> vect_current_border; // vector to store current values at given voltage at borders
@@ -905,8 +987,8 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
                 ch = channel->at(indx);
                 // printf("Channel: %d\n", ch);
             }
-            if (ch < 1 || ch > 256) {
-                std::cerr << "Error: Channel number out of range (1-256): " << ch << std::endl;
+            if (ch < 1 || ch > 264) {
+                std::cerr << "Error: Channel number out of range (1-264): " << ch << std::endl;
                 continue; // skip this channel
             }
 
@@ -925,25 +1007,33 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             g->GetXaxis()->CenterTitle();
             g->GetYaxis()->CenterTitle();
 
-            // Fill histograms with current at given voltage
-            hcurrxch->SetBinContent(indx+1, y[map_indx]); // store current at given voltage in histogram
-            // hcurr->Fill(y[map_indx]); // store current at given voltage in histogram    
-            // store capacitance of the right plateau of CV in 2D histogram
 
-            vect_current.push_back(y[map_indx]); // store current at given voltage in vector
-            if (is_border) {
-                vect_current_border.push_back(y[map_indx]); // store current at given voltage in vector for borders
-            } else {
-                vect_current_inner.push_back(y[map_indx]); // store current at given voltage in vector for inner channels
+            int x_pos = ((ch - 1) % 16) + 1;
+            int y_pos = ((ch - 1) / 16) + 1;
+            // Add condition for channels > 256
+            if (ch >= 257 && ch <= 264) {
+                x_pos = 17 + (ch - 257); // 17 to 24
+                y_pos = 16;
             }
 
-            hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-                        , ((ch-1)/16)+1 // Y position
-                        , y[map_indx]); // value of current at given voltage
+            if (ch >= 1 || ch <= 256) {
+                hcurr_map->Fill(x_pos, y_pos, y[map_indx]);
+                // hcs->Fill(std::exp(p0_2));
+                vect_current.push_back(y[map_indx]);
+                // store capacitance of the right plateau of CV in 2D histogram
+                if (is_border) {
+                    vect_current_border.push_back(y[map_indx]);
+                }
+                else {
+                    vect_current_inner.push_back(y[map_indx]);
+                }
+            }
 
+            // Fill histograms with current at given voltage
+            hcurrxch->SetBinContent(indx+1, y[map_indx]); // store current at given voltage in histogram
             //             // Fill histograms with current at given voltage
             // hcurrxch->SetBinContent(indx+1, TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram
-            // hcurr->Fill(TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram    
+            // hcurr->Fill(TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram
             // // store capacitance of the right plateau of CV in 2D histogram
             // hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
             //             , ((ch-1)/16)+1 // Y position
@@ -957,7 +1047,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             x.clear();
             y.clear();
             yerr.clear();
-        }   
+        }
 
         auto min_curr = *std::min_element(vect_current.begin(), vect_current.end());
         auto max_curr = *std::max_element(vect_current.begin(), vect_current.end());
@@ -978,14 +1068,14 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         for (const auto& val : vect_current_inner) {
             hcurr_inner->Fill(val);
         }
-        
+
         float curr_mean_border = hcurr_border->GetMean();
         float curr_std_border = hcurr_border->GetStdDev();
         // cout << "Current at borders mean: " << curr_mean_border << ", Current at borders std: " << curr_std_border << std::endl;
         float curr_mean_inner = hcurr_inner->GetMean();
         float curr_std_inner = hcurr_inner->GetStdDev();
         // cout << "Current in inner channels mean: " << curr_mean_inner << ", Current in inner channels std: " << curr_std_inner << std::endl;
-  
+
         auto hcurr_zoom = new TH1F("hcurr_zoom", "Current distribution zoomed;Current [nA];Entries", 50, curr_mean_inner - 1*curr_std_inner, curr_mean_border + 1*curr_std_border); // histogram to store current distribution zoomed
         auto hcurr_border_zoom = new TH1F("hcurr_border_zoom", "Current distribution at borders zoomed;Current [nA];Entries", 25, curr_mean_border - 1*curr_std_border, curr_mean_border + 1*curr_std_border); // histogram to store current distribution at borders zoomed
         auto hcurr_inner_zoom = new TH1F("hcurr_inner_zoom", "Current distribution in inner channels zoomed;Current [nA];Entries", 25, curr_mean_inner - 1*curr_std_inner, curr_mean_inner + 1*curr_std_inner); // histogram to store current distribution in inner channels zoomed
@@ -1005,7 +1095,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         float curr_mean_inner_zoom = hcurr_inner_zoom->GetMean();
         float curr_std_inner_zoom = hcurr_inner_zoom->GetStdDev();
         cout << "Current in inner channels zoomed mean: " << curr_mean_inner_zoom << ", Current in inner channels zoomed std: " << curr_std_inner_zoom << std::endl;
-  
+
 
         hcurr_map->SetMinimum(curr_mean_inner - 1*curr_std_inner);
         hcurr_map->SetMaximum(curr_mean_border + 1*curr_std_border);
@@ -1029,7 +1119,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         float curr_mean_inner_zoom2 = hcurr_inner_zoom2->GetMean();
         float curr_std_inner_zoom2 = hcurr_inner_zoom2->GetStdDev();
         cout << "Current in inner channels zoomed2 mean: " << curr_mean_inner_zoom2 << ", Current in inner channels zoomed2 std: " << curr_std_inner_zoom2 << std::endl;
-        
+
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
         auto ccurr = new TCanvas("ccurr", "Canvas", 600, 600);
@@ -1043,7 +1133,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         myFile->cd();
         hcurrxch->Write(); // write histogram with current per channel
         hcurr->Write(); // write histogram with current distribution
-        ccurr->Write(); 
+        ccurr->Write();
         hcurr_border->Write(); // write histogram with current at borders
         hcurr_inner->Write(); // write histogram with current in inner channels
         hcurr_zoom->Write(); // write histogram with current distribution zoomed
