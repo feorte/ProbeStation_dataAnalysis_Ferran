@@ -63,7 +63,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "20", std::string type = "CV")
+int analyse_data(std::string number_sensor = "16", std::string type = "IV")
 {
     cout<< "Analysing data for sensor: " << number_sensor << ", type: " << type << endl;
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
@@ -257,6 +257,11 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 
             if (ch < 1 || ch > 264) {
                 std::cerr << "Error: Channel number out of range (1-264): " << ch << std::endl;
+                continue; // skip this channel
+            }
+
+            if (ch == 3 || ch==77 || ch==78 || ch==164) {
+                std::cerr << "Skiping channel with bad connection: " << ch << std::endl;
                 continue; // skip this channel
             }
 
@@ -1016,28 +1021,29 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
                 y_pos = 16;
             }
 
-            if (ch >= 1 || ch <= 256) {
-                hcurr_map->Fill(x_pos, y_pos, y[map_indx]);
-                // hcs->Fill(std::exp(p0_2));
-                vect_current.push_back(y[map_indx]);
-                // store capacitance of the right plateau of CV in 2D histogram
-                if (is_border) {
-                    vect_current_border.push_back(y[map_indx]);
-                }
-                else {
-                    vect_current_inner.push_back(y[map_indx]);
-                }
+            float current_value;
+            if (ch == 3 || ch==77 || ch==78 || ch==164) {
+                current_value = -1;
+                hcurr_map->Fill(x_pos, y_pos, current_value); // fill 2D histogram with current at given voltage
+                hcurrxch->SetBinContent(indx+1, current_value); // store current at given voltage in histogram
             }
+            else {
+                current_value = y[map_indx];
+                if (ch >= 1 && ch <= 256) {
+                    hcurr_map->Fill(x_pos, y_pos, current_value); // fill 2D histogram with current at given voltage
+                    vect_current.push_back(current_value); // store current at given voltage in vector  
 
-            // Fill histograms with current at given voltage
-            hcurrxch->SetBinContent(indx+1, y[map_indx]); // store current at given voltage in histogram
-            //             // Fill histograms with current at given voltage
-            // hcurrxch->SetBinContent(indx+1, TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram
-            // hcurr->Fill(TMath::Mean(y.size(), &y[0])); // store current at given voltage in histogram
-            // // store capacitance of the right plateau of CV in 2D histogram
-            // hcurr_map->Fill(((ch-1)%16)+1 // X position (from 1 to 16)
-            //             , ((ch-1)/16)+1 // Y position
-            //             , TMath::Mean(y.size(), &y[0])); // value of current at given voltage
+                    if (is_border) {
+                        vect_current_border.push_back(current_value);
+                    }
+                    else {
+                        vect_current_inner.push_back(current_value);
+                    }
+                }
+
+                // Fill histograms with current at given voltage
+                hcurrxch->SetBinContent(indx+1, current_value); // store current at given voltage in histogram
+            }
 
 
             dirIV->cd();
@@ -1048,6 +1054,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             y.clear();
             yerr.clear();
         }
+
 
         auto min_curr = *std::min_element(vect_current.begin(), vect_current.end());
         auto max_curr = *std::max_element(vect_current.begin(), vect_current.end());
