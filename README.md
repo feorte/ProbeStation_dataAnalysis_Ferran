@@ -23,3 +23,15 @@ comparar resultats entre sensors, pasarselos a melissa.
 
 
 ara toca focus del full histograma i els mega histogrames. deixar un poc de espai despres dels maxims dels histogrames.
+
+if (ch >= 1 && ch <= 256) {
+                    hcurr_map->Fill(x_pos, y_pos, current_value); // fill 2D histogram with current at given voltage
+                    vect_current.push_back(current_value); // store current at given voltage in vector  
+
+                    if (is_border) {
+                        vect_current_border.push_back(current_value);
+                    }
+                    else {
+                        vect_current_inner.push_back(current_value);
+                    }
+                }
