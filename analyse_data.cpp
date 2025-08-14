@@ -268,11 +268,26 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
                 continue; // skip this channel
             }
 
+             // some sensors need extra system capacitance correction
+            if (number_sensor == "15") { // for last sensors
+                y_syst += 0.6046573; // no system capacitance for last sensors
+            }
+            if (number_sensor == "16") { // for last sensors
+                y_syst += 0.6010227; // no system capacitance for last sensors
+            }
+            if (number_sensor == "17") { // for last sensors
+                y_syst += 0.5761993; // no system capacitance for last sensors
+            }
+            if (number_sensor == "18") { // for last sensors
+                y_syst += 0.5857236; // no system capacitance for last sensors
+            }
+
             // Substract system capacitance from the measured capacitance
             for (int i = 0; i < n_volt; ++i) {
                 y[i] -= y_syst;
                 yerr[i] = std::sqrt(yerr[i]*yerr[i] + yerr_syst*yerr_syst); // propagate error
             }
+            
 
             // -------------------CV GRAPH--------------------
             std::vector<float> xerr(n_volt, 0); // no error on x-axis
@@ -395,7 +410,7 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
 
             bool is_invalid_channel =
                 (ch == 3 || ch == 77 || ch == 78 || ch == 164) ||
-                (std::exp(p0_2) < 1);
+                (y.back() < 0 || y[0] < 0);
 
             
             if (is_invalid_channel && (ch >= 1 && ch <= 256)) {
@@ -628,7 +643,7 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         double min_cs_inner = *std::min_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
         double max_cs_inner = *std::max_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
 
-        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 50, min_vdep-0.5, max_vdep+0.5); // histogram to store depletion voltages distribution
+        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 30, min_vdep-0.5, max_vdep+0.5); // histogram to store depletion voltages distribution
         TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, min_ndon-1e9, max_ndon+1e9); // histogram to store depletion voltages distribution
         TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_border, max_ndon_border); // histogram to store depletion voltages distribution at borders
         TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_inner, max_ndon_inner); // histogram to store depletion voltages distribution in inner channels
@@ -657,6 +672,30 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         for (const auto& val : vect_capacitance_inner) {
             hcs_inner->Fill(val);
         }
+
+        // --- Single Gaussian fit for hVdep ---
+        TF1* gaus_vdep = new TF1("gaus_vdep", "gaus", min_vdep, max_vdep);
+        hVdep->Fit(gaus_vdep, "REM"); // "R" = fit in range
+
+        // --- Double Gaussian fit function ---
+        TF1* double_gaus_hcs = new TF1("double_gaus_hcs", "gaus(0) + gaus(3)", min_cs, max_cs);
+        double_gaus_hcs->SetParameters( // Initial guesses: amp1, mean1, sigma1, amp2, mean2, sigma2
+            47, 4.79, 0.04,
+            13, 4.975, 0.03
+        );
+        hcs->Fit(double_gaus_hcs, "REM");
+
+        // --- Double Gaussian for hndon ---
+        TF1* double_gaus_hndon = new TF1("double_gaus_hndon", "gaus(0) + gaus(3)", min_ndon, max_ndon);
+        double_gaus_hndon->SetParameters(
+            hndon->GetMaximum(), (min_ndon + max_ndon) / 2 - 5e9, 1e9,
+            hndon->GetMaximum()/2, (min_ndon + max_ndon) / 2 + 5e9, 1e9
+        );
+        hndon->Fit(double_gaus_hndon, "REM");
+
+
+
+
         // set ranges for histogram
         float Vdep_mean = hVdep->GetMean();
         float Vdep_std = hVdep->GetStdDev();
