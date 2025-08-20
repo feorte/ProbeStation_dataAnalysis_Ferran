@@ -16,8 +16,7 @@ const float epsSi = 11.7; // relative permittivity of silicon
 const float eps = epsSi * eps0; // permittivity of silicon in F/m
 const float A = 30.25e-6; // pad area in m^2; 5.5 × 5.5 mm^2 = 30.25 mm^2 = 30.25e-6 m^2
 
-int CVorIV(std::string filename) {
-    // Check the file extension to determine if it's CV or IV
+int CVorIV(std::string filename) {// Check the file extension to determine if it's CV or IV
     if (filename.size() >= 6) {
         std::string ending = filename.substr(filename.size() - 7); // get last 7 chars
 
@@ -63,7 +62,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "16", std::string type = "CV")
+int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 {
     cout<< "Analysing data for sensor: " << number_sensor << ", type: " << type << endl;
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
@@ -73,7 +72,40 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
     // std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
     bool CSIS = false; // set to true if the data is from CSIS, false if from CSIS2
-    int CSIS_ch_map[264] = {48,208,192,240,224,144,128,176,160,80,64,112,96,256,16,32,47,207,191,239,223,143,127,175,159,79,63,111,95,255,15,31,46,206,190,238,222,142,126,174,158,78,62,110,94,254,14,30,45,205,189,237,221,141,125,173,157,77,61,109,93,253,13,29,44,204,188,236,220,140,124,172,156,76,60,108,92,252,12,28,43,203,187,235,219,139,123,171,155,75,59,107,91,251,11,27,42,202,186,234,218,138,122,170,154,74,58,106,90,250,10,26,41,201,185,233,217,137,121,169,153,73,57,105,89,249,9,25,40,200,184,232,216,136,120,168,152,72,56,104,88,248,8,24,39,199,183,231,215,135,119,167,151,71,55,103,87,247,7,23,38,198,182,230,214,134,118,166,150,70,54,102,86,246,6,22,37,197,181,229,213,133,117,165,149,69,53,101,85,245,5,21,36,196,180,228,212,132,116,164,148,68,52,100,84,244,4,20,35,195,179,227,211,131,115,163,147,67,51,99,83,243,3,19,34,194,178,226,210,130,114,162,146,66,50,98,82,242,2,18,33,193,177,225,209,129,113,161,145,65,49,97,81,241,1,17};
+    int CSIS_ch_map[264] = {
+    240,256,16,176,160,208,192,112,
+    96,144,128,48,32,80,64,224,
+    239,255,15,175,159,207,191,111,
+    95,143,127,47,31,79,63,223,
+    238,254,14,174,158,206,190,110,
+    94,142,126,46,30,78,62,222,
+    237,253,13,173,157,205,189,109,
+    93,141,125,45,29,77,61,221,
+    236,252,12,172,156,204,188,108,
+    92,140,124,44,28,76,60,220,
+    235,251,11,171,155,203,187,107,
+    91,139,123,43,27,75,59,219,
+    234,250,10,170,154,202,186,106,
+    90,138,122,42,26,74,58,218,
+    233,249,9,169,153,201,185,105,
+    89,137,121,41,25,73,57,217,
+    232,248,8,168,152,200,184,104,
+    88,136,120,40,24,72,56,216,
+    231,247,7,167,151,199,183,103,
+    87,135,119,39,23,71,55,215,
+    230,246,6,166,150,198,182,102,
+    86,134,118,38,22,70,54,214,
+    229,245,5,165,149,197,181,101,
+    85,133,117,37,21,69,53,213,
+    228,244,4,164,148,196,180,100,
+    84,132,116,36,20,68,52,212,
+    227,243,3,163,147,195,179,99,
+    83,131,115,35,19,67,51,211,
+    226,242,2,162,146,194,178,98,
+    82,130,114,34,18,66,50,210,
+    225,241,1,161,145,193,177,97,
+    81,129,113,33,17,65,49,209
+};
 
     std::vector<int> border_channels = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
                                         17,32,33,48,49,64,65,80,81,96,97,112,113,128,129,144,145,160,161,176,177,192,193,208,209,224,225,240,241,
@@ -410,18 +442,23 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
 
             bool is_invalid_channel =
                 (ch == 3 || ch == 77 || ch == 78 || ch == 164) ||
-                (y.back() < 0 || y[0] < 0);
+                (y.back() < 0 || y[0] < 4);
+
+            if (number_sensor == "20") {
+                is_invalid_channel = is_invalid_channel ||
+                    (ch == 37 || ch == 80 || ch == 115 || ch == 162 || ch == 170 || ch == 184) ;
+            }
 
             
             if (is_invalid_channel && (ch >= 1 && ch <= 256)) {
                 // valid channel, store actual 
+                invalid_ch.push_back(ch);
                 if (ch-16 >= 1) {
                     invalid_ch.push_back(ch-16);
                 }
                 if (ch-1 >= 1 &&  std::find(left_border_channels.begin(), left_border_channels.end(), ch) == left_border_channels.end() ) {
                     invalid_ch.push_back(ch-1);
                 }
-                invalid_ch.push_back(ch);
                 if (ch+1 <= 256 && std::find(right_border_channels.begin(), right_border_channels.end(), ch) == right_border_channels.end()) {
                     invalid_ch.push_back(ch+1);
                 }
@@ -463,6 +500,10 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             // store depletion voltage in histograms
             // hVdepxch->GetXaxis()->SetBinLabel(indx + 1, Form("Ch%d", ch)); // set bin label
 
+            if ((number_sensor == "17" && (ch == 210 || ch == 226)) ||
+                (number_sensor == "18" && (ch == 120 || ch == 136))) {
+                is_invalid_channel = true; // mark as invalid channel
+            }
 
             float Vdep_value = -1; // store depletion voltage in variable
             if (ch>= 1 && ch <= 256) {
@@ -587,11 +628,33 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
             yerr.clear();
         } // end of channel loop
 
+        if (number_sensor == "17")
+            {
+                invalid_ch.push_back(210);
+                invalid_ch.push_back(226);
+            }
+
+        if (number_sensor == "18")
+            {
+                invalid_ch.push_back(120);
+                invalid_ch.push_back(136);
+            }
+
         float cs_value; // default to "invalid" channel
         float ndon_value; // default to "invalid" channel
         for (int i = 0; i < n_ch; ++i) {
 
-            int ch = i+1; // channel number starts at 1
+            int ch; // current channel analysing
+            // which channel analysing
+            if (CSIS) {
+                // map CSIS channels to sensor channels
+                ch = CSIS_ch_map[channel->at(i)-1];
+                // printf("Channel: %d\n", ch);
+            } else {
+                // use channel number as is
+                ch = channel->at(i);
+                // printf("Channel: %d\n", ch);
+            }
 
             if (std::find(invalid_ch.begin(), invalid_ch.end(), ch) != invalid_ch.end()) {
             // i is in the list of invalid channels
@@ -643,11 +706,15 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         double min_cs_inner = *std::min_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
         double max_cs_inner = *std::max_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
 
-        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 30, min_vdep-0.5, max_vdep+0.5); // histogram to store depletion voltages distribution
-        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 50, min_ndon-1e9, max_ndon+1e9); // histogram to store depletion voltages distribution
+        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 12, min_vdep, max_vdep); // histogram to store depletion voltages distribution
+        // regla de Sturges, es k = 1 + 3.322 * log10(n) ~= 9 for 251, extra es per el espai als bordes
+        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 32, min_ndon-1e9, max_ndon+1e9); // histogram to store depletion voltages distribution
+
         TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_border, max_ndon_border); // histogram to store depletion voltages distribution at borders
         TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_inner, max_ndon_inner); // histogram to store depletion voltages distribution in inner channels
-        TH1F* hcs = new TH1F("hcs", "Full depletion capacitance;Capacitance [pF];Entries", 80, min_cs-0.05, max_cs+0.05); // histogram to store depletion voltages distribution
+        
+        TH1F* hcs = new TH1F("hcs", "Full depletion capacitance;Capacitance [pF];Entries", 50, min_cs-0.05, max_cs+0.05); // histogram to store depletion voltages distribution
+        
         TH1F* hcs_border = new TH1F("hcs_border", "Full depletion capacitance at borders;Capacitance [pF];Entries", 200, min_cs_border, max_cs_border); // histogram to store depletion voltages distribution at borders
         TH1F* hcs_inner = new TH1F("hcs_inner", "Full depletion capacitance in inner channels;Capacitance [pF];Entries", 200, min_cs_inner, max_cs_inner); // histogram to store depletion voltages distribution in inner channels
 
@@ -677,21 +744,33 @@ int analyse_data(std::string number_sensor = "16", std::string type = "CV")
         TF1* gaus_vdep = new TF1("gaus_vdep", "gaus", min_vdep, max_vdep);
         hVdep->Fit(gaus_vdep, "REM"); // "R" = fit in range
 
-        // --- Double Gaussian fit function ---
-        TF1* double_gaus_hcs = new TF1("double_gaus_hcs", "gaus(0) + gaus(3)", min_cs, max_cs);
-        double_gaus_hcs->SetParameters( // Initial guesses: amp1, mean1, sigma1, amp2, mean2, sigma2
-            47, 4.79, 0.04,
-            13, 4.975, 0.03
-        );
-        hcs->Fit(double_gaus_hcs, "REM");
+        // --- Two Gaussian fit for Cs ---
+        TF1* gaus_hcs_inner = new TF1("gaus_hcs_inner", "gaus", min_cs, 4.82);
+        TF1* gaus_hcs_border = new TF1("gaus_hcs_border", "gaus", 4.92, 5.02);
+        hcs->Fit(gaus_hcs_inner, "REM");
+        hcs->Fit(gaus_hcs_border, "REM+");
 
-        // --- Double Gaussian for hndon ---
-        TF1* double_gaus_hndon = new TF1("double_gaus_hndon", "gaus(0) + gaus(3)", min_ndon, max_ndon);
-        double_gaus_hndon->SetParameters(
-            hndon->GetMaximum(), (min_ndon + max_ndon) / 2 - 5e9, 1e9,
-            hndon->GetMaximum()/2, (min_ndon + max_ndon) / 2 + 5e9, 1e9
-        );
-        hndon->Fit(double_gaus_hndon, "REM");
+        // --- Two Gaussian fit for donor density ---
+        TF1* gaus_hndon_inner = new TF1("gaus_hndon_inner", "gaus", min_ndon, 123.6e9);
+        TF1* gaus_hndon_border = new TF1("gaus_hndon_border", "gaus", 126e9, 136.7e9);
+        hndon->Fit(gaus_hndon_inner, "REM");
+        hndon->Fit(gaus_hndon_border, "REM+");
+
+        // // --- Double Gaussian fit function ---
+        // TF1* double_gaus_hcs = new TF1("double_gaus_hcs", "gaus(0) + gaus(3)", min_cs, max_cs);
+        // double_gaus_hcs->SetParameters( // Initial guesses: amp1, mean1, sigma1, amp2, mean2, sigma2
+        //     47, 4.79, 0.04,
+        //     13, 4.975, 0.03
+        // );
+        // hcs->Fit(double_gaus_hcs, "REM");
+
+        // // --- Double Gaussian for hndon ---
+        // TF1* double_gaus_hndon = new TF1("double_gaus_hndon", "gaus(0) + gaus(3)", min_ndon, max_ndon);
+        // double_gaus_hndon->SetParameters(
+        //     hndon->GetMaximum(), (min_ndon + max_ndon) / 2 - 5e9, 1e9,
+        //     hndon->GetMaximum()/2, (min_ndon + max_ndon) / 2 + 5e9, 1e9
+        // );
+        // hndon->Fit(double_gaus_hndon, "REM");
 
 
 
