@@ -138,15 +138,26 @@ void plot_means_groups() {
     };
 
     // 5) "TWO ZOOMS": I (nA) second measurement (zoomed)
-    double I_border_zoom[n] = {0.100806, 0.12062, 0.135656, 0.0963891, 0.129376, 0.120814, 0.152946, 0.115018, 0.107442};
+    double I_border_zoom[n] = {1.00802e-01, 1.19649e-01, 1.34433e-01, 9.61273e-02, 1.29500e-01, 
+        1.12517e-01, 1.32401e-01, 1.14193e-01, 1.04858e-01};
     double I_border_zoom_std[n] = {
-        0.00059511, 0.00099792, 0.00145744, 0.00060595,
-        0.00082464, 0.00162617, 0.00770728, 0.00082197, 0.00110551
+        7.55317e-04, 1.67592e-03, 1.92005e-03, 7.66167e-04,
+        8.90387e-04, 2.07455e-03, 1.39123e-03, 1.11859e-03, 1.22975e-03
     };
-    double I_inner_zoom[n] = {0.0250042, 0.0279725, 0.0382536, 0.0238612, 0.0276031, 0.0285825, 0.0373671, 0.0359152, 0.0311854};
+    double I_border_zoom_sigma[n] = {
+        4.10529e-03, 8.23437e-03, 9.52896e-03, 4.44298e-03,
+        5.24834e-03, 4.62978e-03, 6.22953e-03, 7.28483e-03, 6.05784e-03
+    };
+    ///////////////////////////////////////
+    double I_inner_zoom[n] = {2.27959e-02, 2.69181e-02, 3.61673e-02, 2.33366e-02, 2.42778e-02, 2.59393e-02, 
+        3.36645e-02, 2.96695e-02, 2.82294e-02};
     double I_inner_zoom_std[n] = {
-        0.00032649, 0.00030258, 0.00047037, 0.00019491,
-        0.00023539, 0.00039255, 0.00074827, 0.00109921, 0.00057211
+        1.40903e-03, 1.67823e-04, 3.52464e-04, 2.08458e-04,
+        3.25275e-03, 1.26140e-03, 2.69834e-04, 3.47056e-04, 2.54205e-04
+    };
+    double I_inner_zoom_sigma[n] = {
+        6.33633e-03, 1.95250e-03, 3.66714e-03, 2.34243e-03,
+        4.53124e-03, 2.06813e-03, 2.99997e-03, 3.25653e-03, 2.46318e-03
     };
 
     // Lambda for mean
@@ -186,25 +197,231 @@ void plot_means_groups() {
     gI_border->Draw("AP");
     gI_inner->Draw("P SAME");
     double m1b = mean(I_border, n), m1i = mean(I_inner, n);
+
+    // --- compute error of the mean for border
+    double sumsq_b = 0;
+    for (int i = 0; i < n; i++) sumsq_b += (I_border[i] - m1b) * (I_border[i] - m1b);
+    double sigma_b = sqrt(sumsq_b / (n - 1));   // standard deviation
+    double err_b = sigma_b / sqrt(n);           // error of the mean
+
+    // --- compute error of the mean for inner
+    double sumsq_i = 0;
+    for (int i = 0; i < n; i++) sumsq_i += (I_inner[i] - m1i) * (I_inner[i] - m1i);
+    double sigma_i = sqrt(sumsq_i / (n - 1));
+    double err_i = sigma_i / sqrt(n);
+
     TLine *l1b = new TLine(x[0], m1b, x[n - 1], m1b);
     l1b->SetLineColor(kBlue);
     l1b->SetLineStyle(2);
     l1b->Draw();
+
     TLine *l1i = new TLine(x[0], m1i, x[n - 1], m1i);
     l1i->SetLineColor(kRed);
     l1i->SetLineStyle(2);
     l1i->Draw();
-    auto leg1 = new TLegend(0.15, 0.77, 0.4, 0.9);
+
+    // --- draw error band for border mean
+    TBox *errBoxB = new TBox(x[0], m1b - err_b, x[n - 1], m1b + err_b);
+    errBoxB->SetFillColorAlpha(kBlue, 0.2); // semi-transparent blue
+    errBoxB->SetLineColor(kBlue);
+    errBoxB->Draw();
+
+    // --- draw error band for inner mean
+    TBox *errBoxI = new TBox(x[0], m1i - err_i, x[n - 1], m1i + err_i);
+    errBoxI->SetFillColorAlpha(kRed, 0.2); // semi-transparent red
+    errBoxI->SetLineColor(kRed);
+    errBoxI->Draw();
+
+    // --- legend
+    auto leg1 = new TLegend(0.15, 0.72, 0.45, 0.9);
     leg1->AddEntry(gI_border, "border", "lep");
     leg1->AddEntry(gI_inner, "inner", "lep");
     leg1->AddEntry(l1b, Form("all sensors mean (border) = %.2f", m1b), "l");
+    leg1->AddEntry(errBoxB, Form("error of mean (border) = %.2f", err_b), "f");
     leg1->AddEntry(l1i, Form("all sensors mean (inner) = %.2f", m1i), "l");
+    leg1->AddEntry(errBoxI, Form("error of mean (inner) = %.2f", err_i), "f");
     leg1->Draw();
 
-    // 2. I two zooms
+    // // 2. I two zooms
+    // c2->cd();
+    // TGraphErrors *gI_borderz = new TGraphErrors(n, x, I_border_zoom, 0, I_border_zoom_sigma);
+    // TGraphErrors *gI_innerz  = new TGraphErrors(n, x, I_inner_zoom, 0, I_inner_zoom_sigma);
+    // gI_borderz->SetMarkerColor(kBlue + 2);
+    // gI_borderz->SetLineColor(kBlue + 2);
+    // gI_borderz->SetMarkerStyle(22);
+    // gI_innerz->SetMarkerColor(kOrange + 7);
+    // gI_innerz->SetLineColor(kOrange + 7);
+    // gI_innerz->SetMarkerStyle(23);
+    // gI_borderz->SetTitle("Mean current at 120 V;Sensor ID;Mean current [nA]");
+
+    // double I2_min = std::min(*std::min_element(I_border_zoom, I_border_zoom + n), *std::min_element(I_inner_zoom, I_inner_zoom + n));
+    // double I2_max = std::max(*std::max_element(I_border_zoom, I_border_zoom + n), *std::max_element(I_inner_zoom, I_inner_zoom + n));
+    // gI_borderz->GetYaxis()->SetRangeUser(I2_min * 0.8, I2_max * 1.2);
+
+    // gI_borderz->Draw("AP");
+    // gI_innerz->Draw("P SAME");
+    // double m2b = mean(I_border_zoom, n), m2i = mean(I_inner_zoom, n);
+    // TLine *l2b = new TLine(x[0], m2b, x[n - 1], m2b);
+    // l2b->SetLineColor(kBlue + 2);
+    // l2b->SetLineStyle(2);
+    // l2b->Draw();
+    // TLine *l2i = new TLine(x[0], m2i, x[n - 1], m2i);
+    // l2i->SetLineColor(kOrange + 7);
+    // l2i->SetLineStyle(2);
+    // l2i->Draw();
+    // auto leg2 = new TLegend(0.15, 0.77, 0.4, 0.9);
+    // leg2->AddEntry(gI_borderz, "border", "lep");
+    // leg2->AddEntry(gI_innerz, "inner", "lep");
+    // leg2->AddEntry(l2b, Form("all sensors mean (border) = %.2f", m2b), "l");
+    // leg2->AddEntry(l2i, Form("all sensors mean (inner) = %.2f", m2i), "l");
+    // leg2->Draw();
+
+    // // 3. Vdep
+    // c3->cd();
+    // TGraphErrors *gVdep = new TGraphErrors(n, x, Vdep, 0, Vdep_sigma);
+    // gVdep->SetMarkerColor(kMagenta + 2);
+    // gVdep->SetLineColor(kMagenta + 2);
+    // gVdep->SetMarkerStyle(21);
+    // gVdep->SetTitle("Mean depletion voltage;Sensor ID;Mean V_{dep} [V]");
+    // // Adjust y-axis range for Vdep
+    // gVdep->GetYaxis()->SetRangeUser(*std::min_element(Vdep, Vdep + n) * 0.9, *std::max_element(Vdep, Vdep + n) * 1.1);
+
+    // gVdep->Draw("AP");
+    // double mVdep = mean(Vdep, n);
+    // TLine *l3v = new TLine(x[0], mVdep, x[n - 1], mVdep);
+    // l3v->SetLineColor(kMagenta + 2);
+    // l3v->SetLineStyle(2);
+    // l3v->Draw();
+    // auto leg3 = new TLegend(0.15, 0.83, 0.35, 0.93);
+    // leg3->AddEntry(gVdep, "mean values", "lep");
+    // leg3->AddEntry(l3v, Form("all sensors mean = %.2f",mVdep), "l");
+    // leg3->Draw();
+
+    // // 4. cs (pF)
+    // c4->cd();
+    // TGraphErrors *gcsb = new TGraphErrors(n, x, cs_border, 0, cs_border_sigma);
+    // TGraphErrors *gcsi = new TGraphErrors(n, x, cs_inner, 0, cs_inner_sigma);
+    // gcsb->SetMarkerColor(kGreen + 2);
+    // gcsb->SetLineColor(kGreen + 2);
+    // gcsb->SetMarkerStyle(22);
+    // gcsi->SetMarkerColor(kRed + 2);
+    // gcsi->SetLineColor(kRed + 2);
+    // gcsi->SetMarkerStyle(23);
+    // gcsb->SetTitle("Mean full depletion capacitance;Sensor ID;C_{fd} [pF]");
+    // // Set y-axis range to include both groups fully
+    // double cs_min = std::min(*std::min_element(cs_border, cs_border + n), *std::min_element(cs_inner, cs_inner + n));
+    // double cs_max = std::max(*std::max_element(cs_border, cs_border + n), *std::max_element(cs_inner, cs_inner + n));
+    // gcsb->GetYaxis()->SetRangeUser(cs_min * 0.9, cs_max * 1.1);
+
+    // gcsb->Draw("AP");
+    // gcsi->Draw("P SAME");
+
+    // double mcsb = mean(cs_border, n), mcsi = mean(cs_inner, n);
+
+    // // For cs capacitance draw two means: channels (0,1,2,3,8) and (4,5,6,7) zero-based indices
+    // std::vector<int> groupA = {0, 1, 2, 3, 8}; // channels 9,10,13,14,20
+    // std::vector<int> groupB = {4, 5, 6, 7};    // channels 15,16,17,18
+
+    // double mcsbA = mean_subset(cs_border, groupA);
+    // double mcsbB = mean_subset(cs_border, groupB);
+    // double mcsiA = mean_subset(cs_inner, groupA);
+    // double mcsiB = mean_subset(cs_inner, groupB);
+
+    // TLine *l4bA = new TLine(x[0], mcsb, x[n - 1], mcsb);
+    // l4bA->SetLineColor(kGreen + 2);
+    // l4bA->SetLineStyle(2);
+    // l4bA->Draw();
+    // // TLine *l4bB = new TLine(x[0], mcsbB, x[n - 1], mcsbB);
+    // // l4bB->SetLineColor(kGreen + 2);
+    // // l4bB->SetLineStyle(3);
+    // // l4bB->Draw();
+
+    // TLine *l4iA = new TLine(x[0], mcsi, x[n - 1], mcsi);
+    // l4iA->SetLineColor(kRed + 2);
+    // l4iA->SetLineStyle(2);
+    // l4iA->Draw();
+    // // TLine *l4iB = new TLine(x[0], mcsiB, x[n - 1], mcsiB);
+    // // l4iB->SetLineColor(kRed + 2);
+    // // l4iB->SetLineStyle(3);
+    // // l4iB->Draw();
+
+    // auto leg4 = new TLegend(0.15, 0.77, 0.48, 0.9);
+    // leg4->AddEntry(gcsb, "border", "lep");
+    // leg4->AddEntry(gcsi, "inner", "lep");
+    // leg4->AddEntry(l4bA, Form("all sensors mean (border) = %.2f",mcsb), "l");
+    // // leg4->AddEntry(l4bB, Form("sensors 15,16,17,18 mean (border) = %.2f",mcsbB), "l");
+    // // leg4->AddEntry(l4iB, Form("sensors 9,10,13,14,20 mean (inner) = %.2f",mcsiA), "l");
+    // leg4->AddEntry(l4iA, Form("all sensors mean (inner) = %.2f",mcsi), "l");
+    // leg4->Draw();
+
+    // // 5. ndon (ne/cm^3)
+    // c5->cd();
+    // TGraphErrors *gndb = new TGraphErrors(n, x, ndon_border, 0, ndon_border_sigma);
+    // TGraphErrors *gndi = new TGraphErrors(n, x, ndon_inner, 0, ndon_inner_sigma);
+    // gndb->SetMarkerColor(kBlack);
+    // gndb->SetLineColor(kBlack);
+    // gndb->SetMarkerStyle(29);
+    // gndi->SetMarkerColor(kPink + 6);
+    // gndi->SetLineColor(kPink + 6);
+    // gndi->SetMarkerStyle(30);
+    // gndb->SetTitle("Mean donor density;Sensor ID;Mean n_{don} [ne/cm^{3}]");
+
+    // // Adjust y-axis range for donor density (include all points)
+    // double nd_min = std::min(*std::min_element(ndon_border, ndon_border + n), *std::min_element(ndon_inner, ndon_inner + n));
+    // double nd_max = std::max(*std::max_element(ndon_border, ndon_border + n), *std::max_element(ndon_inner, ndon_inner + n));
+    // gndb->GetYaxis()->SetRangeUser(nd_min * 0.9, nd_max * 1.1);
+
+    // gndb->Draw("AP");
+    // gndi->Draw("P SAME");
+
+    // double mndb = mean(ndon_border, n), mndi = mean(ndon_inner, n);
+
+    // // Two groups mean lines: channels {9,10,13,14,20} and {15,16,17,18}
+    // double mndbA = mean_subset(ndon_border, groupA);
+    // double mndbB = mean_subset(ndon_border, groupB);
+    // double mndiA = mean_subset(ndon_inner, groupA);
+    // double mndiB = mean_subset(ndon_inner, groupB);
+
+    // TLine *l5bA = new TLine(x[0], mndb, x[n - 1], mndb);
+    // l5bA->SetLineColor(kBlack);
+    // l5bA->SetLineStyle(2);
+    // l5bA->Draw();
+    // // TLine *l5bB = new TLine(x[0], mndbB, x[n - 1], mndbB);
+    // // l5bB->SetLineColor(kBlack);
+    // // l5bB->SetLineStyle(3);
+    // // l5bB->Draw();
+
+    // // TLine *l5iA = new TLine(x[0], mndiA, x[n - 1], mndiA);
+    // // l5iA->SetLineColor(kPink + 6);
+    // // l5iA->SetLineStyle(2);
+    // // l5iA->Draw();
+    // TLine *l5iB = new TLine(x[0], mndi, x[n - 1], mndi);
+    // l5iB->SetLineColor(kPink + 6);
+    // l5iB->SetLineStyle(3);
+    // l5iB->Draw();
+
+    // auto leg5 = new TLegend(0.55, 0.77, 0.9, 0.9);
+    // leg5->AddEntry(gndb, "border", "lep");
+    // leg5->AddEntry(gndi, "inner", "lep");
+
+    // leg5->AddEntry(l5bA, Form("all sensors mean (border) = %.2e",mndb), "l");
+    // // leg5->AddEntry(l5bB, Form("sensors 15,16,17,18 mean (border) = %.2e",mndbB), "l");
+    // // leg5->AddEntry(l5iA, Form("sensors 9,10,13,14,20 mean (inner) = %.2e",mndiA), "l");
+    // leg5->AddEntry(l5iB, Form("all sensors mean (inner) = %.2e",mndi), "l");
+    // leg5->Draw();
+
+    // TFile* f = new TFile("all_sensors_results.root", "RECREATE");
+    // c1->Write();
+    // c2->Write();
+    // c3->Write();
+    // c4->Write();
+    // c5->Write();
+    // f->Close();
+
+        // 2. I two zooms
     c2->cd();
-    TGraphErrors *gI_borderz = new TGraphErrors(n, x, I_border_zoom, 0, I_border_zoom_std);
-    TGraphErrors *gI_innerz  = new TGraphErrors(n, x, I_inner_zoom, 0, I_inner_zoom_std);
+    TGraphErrors *gI_borderz = new TGraphErrors(n, x, I_border_zoom, 0, I_border_zoom_sigma);
+    TGraphErrors *gI_innerz  = new TGraphErrors(n, x, I_inner_zoom, 0, I_inner_zoom_sigma);
     gI_borderz->SetMarkerColor(kBlue + 2);
     gI_borderz->SetLineColor(kBlue + 2);
     gI_borderz->SetMarkerStyle(22);
@@ -219,20 +436,42 @@ void plot_means_groups() {
 
     gI_borderz->Draw("AP");
     gI_innerz->Draw("P SAME");
+
+    // mean + error for border zoom
     double m2b = mean(I_border_zoom, n), m2i = mean(I_inner_zoom, n);
+    double sumsq2b=0, sumsq2i=0;
+    for (int i=0;i<n;i++) {
+        sumsq2b += (I_border_zoom[i]-m2b)*(I_border_zoom[i]-m2b);
+        sumsq2i += (I_inner_zoom[i]-m2i)*(I_inner_zoom[i]-m2i);
+    }
+    double err2b = sqrt(sumsq2b/(n-1))/sqrt(n);
+    double err2i = sqrt(sumsq2i/(n-1))/sqrt(n);
+
     TLine *l2b = new TLine(x[0], m2b, x[n - 1], m2b);
     l2b->SetLineColor(kBlue + 2);
     l2b->SetLineStyle(2);
     l2b->Draw();
+    TBox *errBox2b = new TBox(x[0], m2b-err2b, x[n-1], m2b+err2b);
+    errBox2b->SetFillColorAlpha(kBlue+2,0.2);
+    errBox2b->SetLineColor(kBlue+2);
+    errBox2b->Draw();
+
     TLine *l2i = new TLine(x[0], m2i, x[n - 1], m2i);
     l2i->SetLineColor(kOrange + 7);
     l2i->SetLineStyle(2);
     l2i->Draw();
-    auto leg2 = new TLegend(0.15, 0.77, 0.4, 0.9);
+    TBox *errBox2i = new TBox(x[0], m2i-err2i, x[n-1], m2i+err2i);
+    errBox2i->SetFillColorAlpha(kOrange+7,0.2);
+    errBox2i->SetLineColor(kOrange+7);
+    errBox2i->Draw();
+
+    auto leg2 = new TLegend(0.15, 0.72, 0.45, 0.9);
     leg2->AddEntry(gI_borderz, "border", "lep");
     leg2->AddEntry(gI_innerz, "inner", "lep");
-    leg2->AddEntry(l2b, Form("all sensors mean (border) = %.2f", m2b), "l");
-    leg2->AddEntry(l2i, Form("all sensors mean (inner) = %.2f", m2i), "l");
+    leg2->AddEntry(l2b, Form("all sensors mean (border) = %.3f", m2b), "l");
+    leg2->AddEntry(errBox2b, Form("error of mean (border) = %.3f", err2b), "f");
+    leg2->AddEntry(l2i, Form("all sensors mean (inner) = %.3f", m2i), "l");
+    leg2->AddEntry(errBox2i, Form("error of mean (inner) = %.3f", err2i), "f");
     leg2->Draw();
 
     // 3. Vdep
@@ -242,18 +481,26 @@ void plot_means_groups() {
     gVdep->SetLineColor(kMagenta + 2);
     gVdep->SetMarkerStyle(21);
     gVdep->SetTitle("Mean depletion voltage;Sensor ID;Mean V_{dep} [V]");
-    // Adjust y-axis range for Vdep
     gVdep->GetYaxis()->SetRangeUser(*std::min_element(Vdep, Vdep + n) * 0.9, *std::max_element(Vdep, Vdep + n) * 1.1);
-
     gVdep->Draw("AP");
+
     double mVdep = mean(Vdep, n);
+    double sumsqV=0; for(int i=0;i<n;i++) sumsqV+=(Vdep[i]-mVdep)*(Vdep[i]-mVdep);
+    double errVdep = sqrt(sumsqV/(n-1))/sqrt(n);
+
     TLine *l3v = new TLine(x[0], mVdep, x[n - 1], mVdep);
     l3v->SetLineColor(kMagenta + 2);
     l3v->SetLineStyle(2);
     l3v->Draw();
-    auto leg3 = new TLegend(0.15, 0.83, 0.35, 0.93);
+    TBox *errBox3v = new TBox(x[0], mVdep-errVdep, x[n-1], mVdep+errVdep);
+    errBox3v->SetFillColorAlpha(kMagenta+2,0.2);
+    errBox3v->SetLineColor(kMagenta+2);
+    errBox3v->Draw();
+
+    auto leg3 = new TLegend(0.15, 0.77, 0.45, 0.9);
     leg3->AddEntry(gVdep, "mean values", "lep");
     leg3->AddEntry(l3v, Form("all sensors mean = %.2f",mVdep), "l");
+    leg3->AddEntry(errBox3v, Form("error of mean = %.2f",errVdep), "f");
     leg3->Draw();
 
     // 4. cs (pF)
@@ -267,50 +514,43 @@ void plot_means_groups() {
     gcsi->SetLineColor(kRed + 2);
     gcsi->SetMarkerStyle(23);
     gcsb->SetTitle("Mean full depletion capacitance;Sensor ID;C_{fd} [pF]");
-    // Set y-axis range to include both groups fully
     double cs_min = std::min(*std::min_element(cs_border, cs_border + n), *std::min_element(cs_inner, cs_inner + n));
     double cs_max = std::max(*std::max_element(cs_border, cs_border + n), *std::max_element(cs_inner, cs_inner + n));
     gcsb->GetYaxis()->SetRangeUser(cs_min * 0.9, cs_max * 1.1);
-
     gcsb->Draw("AP");
     gcsi->Draw("P SAME");
 
     double mcsb = mean(cs_border, n), mcsi = mean(cs_inner, n);
-
-    // For cs capacitance draw two means: channels (0,1,2,3,8) and (4,5,6,7) zero-based indices
-    std::vector<int> groupA = {0, 1, 2, 3, 8}; // channels 9,10,13,14,20
-    std::vector<int> groupB = {4, 5, 6, 7};    // channels 15,16,17,18
-
-    double mcsbA = mean_subset(cs_border, groupA);
-    double mcsbB = mean_subset(cs_border, groupB);
-    double mcsiA = mean_subset(cs_inner, groupA);
-    double mcsiB = mean_subset(cs_inner, groupB);
+    double sumsqcsb=0,sumsqcsi=0;
+    for(int i=0;i<n;i++){sumsqcsb+=(cs_border[i]-mcsb)*(cs_border[i]-mcsb); sumsqcsi+=(cs_inner[i]-mcsi)*(cs_inner[i]-mcsi);}
+    double errcsb = sqrt(sumsqcsb/(n-1))/sqrt(n);
+    double errcsi = sqrt(sumsqcsi/(n-1))/sqrt(n);
 
     TLine *l4bA = new TLine(x[0], mcsb, x[n - 1], mcsb);
     l4bA->SetLineColor(kGreen + 2);
     l4bA->SetLineStyle(2);
     l4bA->Draw();
-    // TLine *l4bB = new TLine(x[0], mcsbB, x[n - 1], mcsbB);
-    // l4bB->SetLineColor(kGreen + 2);
-    // l4bB->SetLineStyle(3);
-    // l4bB->Draw();
+    TBox *errBox4b = new TBox(x[0], mcsb-errcsb, x[n-1], mcsb+errcsb);
+    errBox4b->SetFillColorAlpha(kGreen+2,0.2);
+    errBox4b->SetLineColor(kGreen+2);
+    errBox4b->Draw("same");
 
     TLine *l4iA = new TLine(x[0], mcsi, x[n - 1], mcsi);
     l4iA->SetLineColor(kRed + 2);
     l4iA->SetLineStyle(2);
     l4iA->Draw();
-    // TLine *l4iB = new TLine(x[0], mcsiB, x[n - 1], mcsiB);
-    // l4iB->SetLineColor(kRed + 2);
-    // l4iB->SetLineStyle(3);
-    // l4iB->Draw();
+    TBox *errBox4i = new TBox(x[0], mcsi-errcsi, x[n-1], mcsi+errcsi);
+    errBox4i->SetFillColorAlpha(kRed+2,0.2);
+    errBox4i->SetLineColor(kRed+2);
+    errBox4i->Draw("same");
 
-    auto leg4 = new TLegend(0.15, 0.77, 0.48, 0.9);
+    auto leg4 = new TLegend(0.15, 0.72, 0.48, 0.9);
     leg4->AddEntry(gcsb, "border", "lep");
     leg4->AddEntry(gcsi, "inner", "lep");
-    leg4->AddEntry(l4bA, Form("all sensors mean (border) = %.2f",mcsb), "l");
-    // leg4->AddEntry(l4bB, Form("sensors 15,16,17,18 mean (border) = %.2f",mcsbB), "l");
-    // leg4->AddEntry(l4iB, Form("sensors 9,10,13,14,20 mean (inner) = %.2f",mcsiA), "l");
-    leg4->AddEntry(l4iA, Form("all sensors mean (inner) = %.2f",mcsi), "l");
+    leg4->AddEntry(l4bA, Form("all sensors mean (border) = %.3f",mcsb), "l");
+    leg4->AddEntry(errBox4b, Form("error of mean (border) = %.3f",errcsb), "f");
+    leg4->AddEntry(l4iA, Form("all sensors mean (inner) = %.3f",mcsi), "l");
+    leg4->AddEntry(errBox4i, Form("error of mean (inner) = %.3f",errcsi), "f");
     leg4->Draw();
 
     // 5. ndon (ne/cm^3)
@@ -325,7 +565,6 @@ void plot_means_groups() {
     gndi->SetMarkerStyle(30);
     gndb->SetTitle("Mean donor density;Sensor ID;Mean n_{don} [ne/cm^{3}]");
 
-    // Adjust y-axis range for donor density (include all points)
     double nd_min = std::min(*std::min_element(ndon_border, ndon_border + n), *std::min_element(ndon_inner, ndon_inner + n));
     double nd_max = std::max(*std::max_element(ndon_border, ndon_border + n), *std::max_element(ndon_inner, ndon_inner + n));
     gndb->GetYaxis()->SetRangeUser(nd_min * 0.9, nd_max * 1.1);
@@ -334,39 +573,36 @@ void plot_means_groups() {
     gndi->Draw("P SAME");
 
     double mndb = mean(ndon_border, n), mndi = mean(ndon_inner, n);
-
-    // Two groups mean lines: channels {9,10,13,14,20} and {15,16,17,18}
-    double mndbA = mean_subset(ndon_border, groupA);
-    double mndbB = mean_subset(ndon_border, groupB);
-    double mndiA = mean_subset(ndon_inner, groupA);
-    double mndiB = mean_subset(ndon_inner, groupB);
+    double sumsqndb=0,sumsqndi=0;
+    for(int i=0;i<n;i++){sumsqndb+=(ndon_border[i]-mndb)*(ndon_border[i]-mndb); sumsqndi+=(ndon_inner[i]-mndi)*(ndon_inner[i]-mndi);}
+    double errndb = sqrt(sumsqndb/(n-1))/sqrt(n);
+    double errndi = sqrt(sumsqndi/(n-1))/sqrt(n);
 
     TLine *l5bA = new TLine(x[0], mndb, x[n - 1], mndb);
     l5bA->SetLineColor(kBlack);
     l5bA->SetLineStyle(2);
     l5bA->Draw();
-    // TLine *l5bB = new TLine(x[0], mndbB, x[n - 1], mndbB);
-    // l5bB->SetLineColor(kBlack);
-    // l5bB->SetLineStyle(3);
-    // l5bB->Draw();
+    TBox *errBox5b = new TBox(x[0], mndb-errndb, x[n-1], mndb+errndb);
+    errBox5b->SetFillColorAlpha(kBlack,0.2);
+    errBox5b->SetLineColor(kBlack);
+    errBox5b->Draw("same");
 
-    // TLine *l5iA = new TLine(x[0], mndiA, x[n - 1], mndiA);
-    // l5iA->SetLineColor(kPink + 6);
-    // l5iA->SetLineStyle(2);
-    // l5iA->Draw();
     TLine *l5iB = new TLine(x[0], mndi, x[n - 1], mndi);
     l5iB->SetLineColor(kPink + 6);
-    l5iB->SetLineStyle(3);
+    l5iB->SetLineStyle(2);
     l5iB->Draw();
+    TBox *errBox5i = new TBox(x[0], mndi-errndi, x[n-1], mndi+errndi);
+    errBox5i->SetFillColorAlpha(kPink+6,0.2);
+    errBox5i->SetLineColor(kPink+6);
+    errBox5i->Draw("same");
 
-    auto leg5 = new TLegend(0.55, 0.77, 0.9, 0.9);
+    auto leg5 = new TLegend(0.55, 0.72, 0.9, 0.9);
     leg5->AddEntry(gndb, "border", "lep");
     leg5->AddEntry(gndi, "inner", "lep");
-
     leg5->AddEntry(l5bA, Form("all sensors mean (border) = %.2e",mndb), "l");
-    // leg5->AddEntry(l5bB, Form("sensors 15,16,17,18 mean (border) = %.2e",mndbB), "l");
-    // leg5->AddEntry(l5iA, Form("sensors 9,10,13,14,20 mean (inner) = %.2e",mndiA), "l");
+    leg5->AddEntry(errBox5b, Form("error of mean (border) = %.2e",errndb), "f");
     leg5->AddEntry(l5iB, Form("all sensors mean (inner) = %.2e",mndi), "l");
+    leg5->AddEntry(errBox5i, Form("error of mean (inner) = %.2e",errndi), "f");
     leg5->Draw();
 
     TFile* f = new TFile("all_sensors_results.root", "RECREATE");
@@ -376,7 +612,6 @@ void plot_means_groups() {
     c4->Write();
     c5->Write();
     f->Close();
-
 
 
 }

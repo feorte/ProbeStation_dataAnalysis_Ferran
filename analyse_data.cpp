@@ -62,7 +62,7 @@ void log_scale(int n_volt, std::vector<float> x, std::vector<float> y, std::vect
 }
 
 
-int analyse_data(std::string number_sensor = "20", std::string type = "CV")
+int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV")
 {
     cout<< "Analysing data for sensor: " << number_sensor << ", type: " << type << endl;
     std::string storingfile = "stored_data/stored_data_" + number_sensor + "_" + type + ".root";
@@ -71,7 +71,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 
     // std::string storingfile = "stored_data/stored_data_CV.root"; // replace with your file name
 
-    bool CSIS = false; // set to true if the data is from CSIS, false if from CSIS2
+    bool CSIS = true; // set to true if the data is from CSIS, false if from CSIS2
     int CSIS_ch_map[264] = {
     240,256,16,176,160,208,192,112,
     96,144,128,48,32,80,64,224,
@@ -443,6 +443,11 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             bool is_invalid_channel =
                 (ch == 3 || ch == 77 || ch == 78 || ch == 164) ||
                 (y.back() < 0 || y[0] < 4);
+            
+            if (CSIS)
+            {
+                is_invalid_channel = (ch == 6 || ch == 7 || ch == 8) || (y.back() < 0 || y[0] < 4);
+            }
 
             if (number_sensor == "20") {
                 is_invalid_channel = is_invalid_channel ||
@@ -750,11 +755,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         hcs->Fit(gaus_hcs_inner, "REM");
         hcs->Fit(gaus_hcs_border, "REM+");
 
-        // --- Two Gaussian fit for donor density ---
-        TF1* gaus_hndon_inner = new TF1("gaus_hndon_inner", "gaus", min_ndon, 123.6e9);
-        TF1* gaus_hndon_border = new TF1("gaus_hndon_border", "gaus", 126e9, 136.7e9);
-        hndon->Fit(gaus_hndon_inner, "REM");
-        hndon->Fit(gaus_hndon_border, "REM+");
+
 
         // // --- Double Gaussian fit function ---
         // TF1* double_gaus_hcs = new TF1("double_gaus_hcs", "gaus(0) + gaus(3)", min_cs, max_cs);
@@ -1213,9 +1214,26 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
             float current_value = -1;  // default to "invalid" channel
 
             bool is_invalid_channel =
-                (ch == 3 || ch == 77 || ch == 78 || ch == 164) ||
+                ((ch == 3 || ch == 77 || ch == 78 || ch == 164) ||
                 (y[map_indx] > 0.15 && is_border) ||
-                (y[map_indx] > 0.06 && !is_border);
+                (y[map_indx] > 0.06 && !is_border) ||
+                (y[map_indx] < -0));
+
+
+            if (CSIS)
+            {
+                is_invalid_channel = 
+                (ch == 6 || ch == 7 || ch == 8) ||
+                ((y[map_indx] > 0.15 && is_border) ||
+                (y[map_indx] > 0.06 && !is_border) ||
+                (y[map_indx] < -0));
+            }
+
+           if (ch==1 || ch==16 || ch==241 || ch==256) // additional condition for invalid channels
+           {
+                is_invalid_channel = (y[map_indx] > 0.3) ||
+                (y[map_indx] < 0);
+           }
 
             if (ch>= 1 && ch <= 256) {
                 if (!is_invalid_channel) {
@@ -1253,7 +1271,7 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         auto min_curr_inner = *std::min_element(vect_current_inner.begin(), vect_current_inner.end());
         auto max_curr_inner = *std::max_element(vect_current_inner.begin(), vect_current_inner.end());
 
-        auto hcurr = new TH1F("hcurr", "Current distribution;Current [nA];Entries", 200, min_curr, max_curr); // histogram to store current distribution
+        auto hcurr = new TH1F("hcurr", "Current distribution;Current [nA];Entries", 40, min_curr-0.02, max_curr+0.01); // histogram to store current distribution
         auto hcurr_border = new TH1F("hcurr_border", "Current distribution at borders;Current [nA];Entries", 100, min_curr_border, max_curr_border); // histogram to store current distribution at borders
         auto hcurr_inner = new TH1F("hcurr_inner", "Current distribution in inner channels;Current [nA];Entries", 200, min_curr_inner, max_curr_inner); // histogram to store current distribution in inner channels
         for (const auto& val : vect_current) {
@@ -1265,6 +1283,16 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         for (const auto& val : vect_current_inner) {
             hcurr_inner->Fill(val);
         }
+
+        // --- Two Gaussian fit for current ---
+        TF1* gaus_hcurr_inner = new TF1("gaus_hcurr_inner", "gaus", min_curr-0.005, 0.041);
+        TF1* gaus_hcurr_border = new TF1("gaus_hcurr_border", "gaus", 0.095, 0.135);
+        hcurr->Fit(gaus_hcurr_inner, "REM");
+        hcurr->Fit(gaus_hcurr_border, "REM+");
+
+
+
+
 
         float curr_mean_border = hcurr_border->GetMean();
         float curr_std_border = hcurr_border->GetStdDev();
@@ -1288,14 +1316,14 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 
         float curr_mean_border_zoom = hcurr_border_zoom->GetMean();
         float curr_std_border_zoom = hcurr_border_zoom->GetStdDev();
-        cout << "Current at borders zoomed mean: " << curr_mean_border_zoom << ", Current at borders zoomed std: " << curr_std_border_zoom << std::endl;
+        // cout << "Current at borders zoomed mean: " << curr_mean_border_zoom << ", Current at borders zoomed std: " << curr_std_border_zoom << std::endl;
         float curr_mean_inner_zoom = hcurr_inner_zoom->GetMean();
         float curr_std_inner_zoom = hcurr_inner_zoom->GetStdDev();
-        cout << "Current in inner channels zoomed mean: " << curr_mean_inner_zoom << ", Current in inner channels zoomed std: " << curr_std_inner_zoom << std::endl;
+        // cout << "Current in inner channels zoomed mean: " << curr_mean_inner_zoom << ", Current in inner channels zoomed std: " << curr_std_inner_zoom << std::endl;
 
-
-        hcurr_map->SetMinimum(curr_mean_inner - 1*curr_std_inner);
-        hcurr_map->SetMaximum(curr_mean_border + 1*curr_std_border);
+        // hcurr_map->SetMaximum(vect_current[vect_current.size() - 5]); // get the fifth last value in the vector to avoid corners
+        hcurr_map->SetMinimum(min_curr); // get the fifth last value in the vector to avoid corners
+        hcurr_map->SetMaximum(max_curr);
 
         TH1F* hcurr_zoom2 = new TH1F("hcurr_zoom2", "Current distribution zoomed2;Current [nA];Entries", 50, curr_mean_inner_zoom - 1*curr_std_inner_zoom, curr_mean_border_zoom + 1*curr_std_border_zoom); // histogram to store current distribution zoomed
         TH1F* hcurr_border_zoom2 = new TH1F("hcurr_border_zoom2", "Current distribution at borders zoomed2;Current [nA];Entries", 25, curr_mean_border_zoom - 1*curr_std_border_zoom, curr_mean_border_zoom + 1*curr_std_border_zoom); // histogram to store current distribution at borders zoomed
@@ -1312,10 +1340,10 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
 
         float curr_mean_border_zoom2 = hcurr_border_zoom2->GetMean();
         float curr_std_border_zoom2 = hcurr_border_zoom2->GetStdDev();
-        cout << "Current at borders zoomed2 mean: " << curr_mean_border_zoom2 << ", Current at borders zoomed2 std: " << curr_std_border_zoom2 << std::endl;
+        // cout << "Current at borders zoomed2 mean: " << curr_mean_border_zoom2 << ", Current at borders zoomed2 std: " << curr_std_border_zoom2 << std::endl;
         float curr_mean_inner_zoom2 = hcurr_inner_zoom2->GetMean();
         float curr_std_inner_zoom2 = hcurr_inner_zoom2->GetStdDev();
-        cout << "Current in inner channels zoomed2 mean: " << curr_mean_inner_zoom2 << ", Current in inner channels zoomed2 std: " << curr_std_inner_zoom2 << std::endl;
+        // cout << "Current in inner channels zoomed2 mean: " << curr_mean_inner_zoom2 << ", Current in inner channels zoomed2 std: " << curr_std_inner_zoom2 << std::endl;
 
         gStyle->SetPalette(kBlueRedYellow); // Set default color palette
         // Current at given voltage
@@ -1331,14 +1359,14 @@ int analyse_data(std::string number_sensor = "20", std::string type = "CV")
         hcurrxch->Write(); // write histogram with current per channel
         hcurr->Write(); // write histogram with current distribution
         ccurr->Write();
-        hcurr_border->Write(); // write histogram with current at borders
-        hcurr_inner->Write(); // write histogram with current in inner channels
-        hcurr_zoom->Write(); // write histogram with current distribution zoomed
-        hcurr_border_zoom->Write(); // write histogram with current at borders zoomed
-        hcurr_inner_zoom->Write(); // write histogram with current in inner channels zoomed
-        hcurr_zoom2->Write(); // write histogram with current distribution zoomed2
-        hcurr_border_zoom2->Write(); // write histogram with current at borders zoomed2
-        hcurr_inner_zoom2->Write(); // write histogram with current in inner channels zoomed
+        //hcurr_border->Write(); // write histogram with current at borders
+        // hcurr_inner->Write(); // write histogram with current in inner channels
+        // hcurr_zoom->Write(); // write histogram with current distribution zoomed
+        // hcurr_border_zoom->Write(); // write histogram with current at borders zoomed
+        // hcurr_inner_zoom->Write(); // write histogram with current in inner channels zoomed
+        // hcurr_zoom2->Write(); // write histogram with current distribution zoomed2
+        // hcurr_border_zoom2->Write(); // write histogram with current at borders zoomed2
+        // hcurr_inner_zoom2->Write(); // write histogram with current in inner channels zoomed
     }
 
     return 0;
