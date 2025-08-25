@@ -446,7 +446,7 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
             
             if (CSIS)
             {
-                is_invalid_channel = (ch == 6 || ch == 7 || ch == 8) || (y.back() < 0 || y[0] < 4);
+                is_invalid_channel = (y.back() < 0 || y[0] < 4);
             }
 
             if (number_sensor == "20") {
@@ -509,6 +509,11 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
                 (number_sensor == "18" && (ch == 120 || ch == 136))) {
                 is_invalid_channel = true; // mark as invalid channel
             }
+
+            // if (CSIS)
+            // {
+            //     is_invalid_channel = (ch == 6 || ch == 7 || ch == 8 || ch == 241);
+            // }
 
             float Vdep_value = -1; // store depletion voltage in variable
             if (ch>= 1 && ch <= 256) {
@@ -644,6 +649,14 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
                 invalid_ch.push_back(120);
                 invalid_ch.push_back(136);
             }
+        
+        // if (CSIS)
+        // {
+        //     invalid_ch.push_back(6);
+        //     invalid_ch.push_back(7);
+        //     invalid_ch.push_back(8);
+        //     invalid_ch.push_back(241);
+        // }
 
         float cs_value; // default to "invalid" channel
         float ndon_value; // default to "invalid" channel
@@ -711,14 +724,14 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
         double min_cs_inner = *std::min_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
         double max_cs_inner = *std::max_element(vect_capacitance_inner.begin(), vect_capacitance_inner.end());
 
-        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 12, min_vdep, max_vdep); // histogram to store depletion voltages distribution
+        TH1F* hVdep = new TH1F("hVdep", "Depletion Voltage;V_{dep} [V];Entries", 30, min_vdep, max_vdep); // histogram to store depletion voltages distribution
         // regla de Sturges, es k = 1 + 3.322 * log10(n) ~= 9 for 251, extra es per el espai als bordes
-        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 32, min_ndon-1e9, max_ndon+1e9); // histogram to store depletion voltages distribution
+        TH1F* hndon = new TH1F("hndon", "Donnor density;Donnor density [ne/cm^{3}];Entries", 30, min_ndon-1e9, /*max_ndon+1e9*/1.5e11); // histogram to store depletion voltages distribution
 
         TH1F* hndon_border = new TH1F("hndon_border", "Donnor density at borders;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_border, max_ndon_border); // histogram to store depletion voltages distribution at borders
         TH1F* hndon_inner = new TH1F("hndon_inner", "Donnor density in inner channels;Donnor density [ne/cm^{3}];Entries", 200, min_ndon_inner, max_ndon_inner); // histogram to store depletion voltages distribution in inner channels
         
-        TH1F* hcs = new TH1F("hcs", "Full depletion capacitance;Capacitance [pF];Entries", 50, min_cs-0.05, max_cs+0.05); // histogram to store depletion voltages distribution
+        TH1F* hcs = new TH1F("hcs", "Full depletion capacitance;Capacitance [pF];Entries", 20, min_cs-0.05, /*max_cs+0.05*/ 5.2); // histogram to store depletion voltages distribution
         
         TH1F* hcs_border = new TH1F("hcs_border", "Full depletion capacitance at borders;Capacitance [pF];Entries", 200, min_cs_border, max_cs_border); // histogram to store depletion voltages distribution at borders
         TH1F* hcs_inner = new TH1F("hcs_inner", "Full depletion capacitance in inner channels;Capacitance [pF];Entries", 200, min_cs_inner, max_cs_inner); // histogram to store depletion voltages distribution in inner channels
@@ -746,14 +759,20 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
         }
 
         // --- Single Gaussian fit for hVdep ---
-        TF1* gaus_vdep = new TF1("gaus_vdep", "gaus", min_vdep, max_vdep);
+        TF1* gaus_vdep = new TF1("gaus_vdep", "gaus", min_vdep, 40.5);
         hVdep->Fit(gaus_vdep, "REM"); // "R" = fit in range
 
         // --- Two Gaussian fit for Cs ---
-        TF1* gaus_hcs_inner = new TF1("gaus_hcs_inner", "gaus", min_cs, 4.82);
-        TF1* gaus_hcs_border = new TF1("gaus_hcs_border", "gaus", 4.92, 5.02);
+        TF1* gaus_hcs_inner = new TF1("gaus_hcs_inner", "gaus", 4.66, 4.76);
+        TF1* gaus_hcs_border = new TF1("gaus_hcs_border", "gaus", 4.85, 5.02);
         hcs->Fit(gaus_hcs_inner, "REM");
         hcs->Fit(gaus_hcs_border, "REM+");
+
+        // --- Two Gaussian fit for ndon ---
+        TF1* gaus_hndon_inner = new TF1("gaus_hndon_inner", "gaus", 1.1e11, 1.2e11);
+        TF1* gaus_hndon_border = new TF1("gaus_hndon_border", "gaus", 1.25e11, 1.35e11);
+        hndon->Fit(gaus_hndon_inner, "REM");
+        hndon->Fit(gaus_hndon_border, "REM+");
 
 
 
@@ -768,10 +787,10 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
         // // --- Double Gaussian for hndon ---
         // TF1* double_gaus_hndon = new TF1("double_gaus_hndon", "gaus(0) + gaus(3)", min_ndon, max_ndon);
         // double_gaus_hndon->SetParameters(
-        //     hndon->GetMaximum(), (min_ndon + max_ndon) / 2 - 5e9, 1e9,
-        //     hndon->GetMaximum()/2, (min_ndon + max_ndon) / 2 + 5e9, 1e9
+        //     30, 155e9, 2e9,
+        //     12, 163e9, 5e9
         // );
-        // hndon->Fit(double_gaus_hndon, "REM");
+        // hndon->Fit(double_gaus_hndon, "REM+");
 
 
 
@@ -1223,7 +1242,6 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
             if (CSIS)
             {
                 is_invalid_channel = 
-                (ch == 6 || ch == 7 || ch == 8) ||
                 ((y[map_indx] > 0.15 && is_border) ||
                 (y[map_indx] > 0.06 && !is_border) ||
                 (y[map_indx] < -0));
@@ -1271,7 +1289,7 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
         auto min_curr_inner = *std::min_element(vect_current_inner.begin(), vect_current_inner.end());
         auto max_curr_inner = *std::max_element(vect_current_inner.begin(), vect_current_inner.end());
 
-        auto hcurr = new TH1F("hcurr", "Current distribution;Current [nA];Entries", 40, min_curr-0.02, max_curr+0.01); // histogram to store current distribution
+        auto hcurr = new TH1F("hcurr", "Current distribution;Current [nA];Entries", 20, min_curr-0.02, max_curr+0.01); // histogram to store current distribution
         auto hcurr_border = new TH1F("hcurr_border", "Current distribution at borders;Current [nA];Entries", 100, min_curr_border, max_curr_border); // histogram to store current distribution at borders
         auto hcurr_inner = new TH1F("hcurr_inner", "Current distribution in inner channels;Current [nA];Entries", 200, min_curr_inner, max_curr_inner); // histogram to store current distribution in inner channels
         for (const auto& val : vect_current) {
@@ -1285,8 +1303,8 @@ int analyse_data(std::string number_sensor = "CSIS_001", std::string type = "CV"
         }
 
         // --- Two Gaussian fit for current ---
-        TF1* gaus_hcurr_inner = new TF1("gaus_hcurr_inner", "gaus", min_curr-0.005, 0.041);
-        TF1* gaus_hcurr_border = new TF1("gaus_hcurr_border", "gaus", 0.095, 0.135);
+        TF1* gaus_hcurr_inner = new TF1("gaus_hcurr_inner", "gaus", 0.01, 0.043);
+        TF1* gaus_hcurr_border = new TF1("gaus_hcurr_border", "gaus", 0.06, 0.084);
         hcurr->Fit(gaus_hcurr_inner, "REM");
         hcurr->Fit(gaus_hcurr_border, "REM+");
 
