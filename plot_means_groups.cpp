@@ -1,617 +1,236 @@
-#include <TCanvas.h>
-#include <TGraphErrors.h>
-#include <TLegend.h>
-#include <TAxis.h>
-#include <TLine.h>
-#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
 #include <vector>
 
-void plot_means_groups() {
-    const int n = 9; // 9 points (sensor ids)
-    double x[n] = {9, 10, 13, 14, 15, 16, 17, 18, 20};
+#include "TBox.h"
+#include "TCanvas.h"
+#include "TColor.h"
+#include "TFile.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include "TLine.h"
+#include "TString.h"
 
-    // 1) I (nA) FIRST "ONE ZOOM" block
-    double I_border[n] = {0.102106, 0.124096, 0.141025, 0.0996983, 0.133513, 0.130092, 0.236907, 0.116035, 0.114175};
-    double I_border_std[n] = {
-        0.00136566, 0.00207136, 0.003234042, 0.001537522,
-        0.002476146, 0.003149085, 0.083538352, 0.001503999, 0.003237171
-    };
+namespace {
 
-    double I_inner[n] = {0.0277687, 0.0323819, 0.0422819, 0.0261969, 0.02996, 0.0325467, 0.0487106, 0.0498156, 0.0385838};
-    double I_inner_std[n] = {
-        0.00066764, 0.00116804, 0.00121416, 0.0005778,
-        0.0006884, 0.00111217, 0.00298892, 0.00326956, 0.00165396
-    };
+struct Series {
+    std::string label;
+    std::vector<double> values;
+    std::vector<double> errors;
+    Color_t color;
+    Style_t marker;
+};
 
-    // // 2) Vdep
-    // double Vdep[n] = {39.2555, 43.04, 42.603, 39.5754, 38.8523, 39.66, 38.82, 40.06, 40.06};
-    // double Vdep_std[n] = {
-    //     0.03780501, 0.060241389, 0.086240722, 0.030549367,
-    //     0.059404365, 0.040913548, 0.034136491, 0.035638625, 0.054092008
-    // };
-
-    // double Vdep_sigma[n] = {
-    //     5.56084e-01, 0.00060241389, 0.00086240722, 0.00030549367,
-    //     0.00059404365, 0.00040913548, 0.00034136491, 0.00035638625, 0.00054092008
-    // };
-
-    // 2) Vdep
-    double Vdep[n] = {3.92443e+01, 4.21407e+01, 4.15955e+01, 3.95250e+01, 3.92711e+01, 4.01523e+01, 3.92806e+01, 3.99765e+01, 3.99105e+01};
-    double Vdep_std[n] = {
-        3.67608e-02, 9.37175e-02, 3.18743e-02, 2.90011e-02,
-        5.11238e-02, 4.08274e-02, 3.28996e-02, 3.83613e-02, 4.10977e-02
-    };
-    double Vdep_sigma[n] = {
-        5.18085e-01, 5.93510e-01, 3.50522e-01, 3.98827e-01,
-        5.90837e-01, 6.13164e-01, 5.11247e-01, 3.63510e-01, 5.57616e-01
-    };
-
-    // 3) cs (pF)
-    // double cs_border[n] = {4.94972, 4.97321, 4.96237, 4.97211, 5.61206, 5.62857, 5.5846, 5.58511, 5.00635}; // original values with no correction
-    double cs_border[n] = {4.92100e+00, 4.93655e+00, 4.93350e+00, 4.94820e+00, 4.96133e+00, 4.98191e+00, 4.98339e+00, 4.96732e+00, 4.96264e+00};
-    double cs_border_std[n] = {
-        1.06944e-03, 1.80462e-03, 1.18650e-03, 2.37933e-03,
-        1.59050e-03, 1.72863e-03, 2.85368e-03, 2.25959e-03, 3.53639e-03
-    };
-    double cs_border_sigma[n] = {
-        5.95503e-03, 7.68074e-03,  6.93998e-03, 1.41305e-02,
-        9.11386e-03, 1.02376e-02, 1.71502e-02, 1.32169e-02, 1.69416e-02
-    };
-
-
-    double cs_inner[n] = {4.73487e+00, 4.74862e+00, 4.74626e+00, 4.75559e+00, 4.77339e+00, 4.79067e+00, 4.79506e+00, 4.77681e+00, 4.76937e+00};
-    double cs_inner_std[n] = {
-        4.79163e-04, 7.37504e-04,  8.88164e-04, 1.07228e-03,
-        8.62581e-04, 7.27618e-04, 9.70663e-04, 8.66491e-04, 1.14758e-03
-    };
-    double cs_inner_sigma[n] = {
-        5.79868e-03, 8.32303e-03, 6.72275e-03, 8.95443e-03,
-        9.85736e-03, 8.44902e-03, 1.12740e-02, 1.05223e-02, 1.25169e-02
-    };
-
-    // double cs_border[n] = {4.94972, 4.97321, 4.96237, 4.97211, 5.61206-0.6046573, 5.62857-0.6010227, 5.5846-0.5761993, 5.58511-0.5857236, 5.00635};
-    // double cs_border_std[n] = {
-    //     0.00903608, 0.01114395, 0.00900834, 0.00900115,
-    //     0.01250869, 0.01380738, 0.00893851, 0.00988191, 0.01301919
-    // };
-    // double cs_inner[n] = {4.76043, 4.77507, 4.7658, 4.77434, 5.3996-0.6046573, 5.41376-0.6010227, 5.38917-0.5761993, 5.38202-0.5857236, 4.81161};
-    // double cs_inner_std[n] = {
-    //     0.00537691, 0.00549771, 0.00492559, 0.00488354,
-    //     0.00518196, 0.00521576, 0.00493167, 0.00503737, 0.0070233
-    // };
-
-    // 4) ndon (ne/cm^3)
-
-
-    // double ndon_border[n] = {
-    //     128593e6, 137073e6, 136001e6, 131361e6, 168669e6,
-    //     171926e6, 164653e6, 173880e6, 133589e6
-    // };
-    // double ndon_border[n] = {
-    //     128593e6, 137073e6, 136001e6, 131361e6, 168669e6-2.83E+10,
-    //     171926e6-2.83E+10, 164653e6-2.82E+10, 173880e6-2.82E+10, 133589e6
-    // };
-    // double ndon_border_std[n] = {
-    //     544838973.3, 614812157.8, 551941338.3, 689705421.5,
-    //     973215776.7, 985635406.7, 612865095.2, 912180268.2, 756498980.9
-    // };
-    // // double ndon_inner[n] = {
-    // //     117585e6, 132229e6, 128448e6, 116860e6, 152679e6,
-    // //     155203e6, 151460e6, 156954e6, 122504e6
-    // // };
-    // double ndon_inner[n] = {
-    //     117585e6, 132229e6, 128448e6, 116860e6, 152679e6-2.83E+10,
-    //     155203e6-2.83E+10, 151460e6-2.82E+10, 156954e6-2.82E+10, 122504e6
-    // };
-    // double ndon_inner_std[n] = {
-    //     308947799, 483042437, 398802782, 308230863,
-    //     329007832, 324315428, 310813613, 387044398, 392019059
-    // };
-
-    double ndon_border[n] = {
-        1.27814e+11, 1.35721e+11, 1.34992e+11, 1.29874e+11, 1.29836e+11,
-       1.33602e+11, 1.30404e+11, 1.31473e+11, 1.31337e+11
-    };
-    double ndon_border_std[n] = {
-        2.24065e+08, 4.81926e+08, 4.31075e+08, 2.92711e+08,
-        3.29726e+08, 2.49179e+08, 3.64356e+08, 3.28163e+08, 3.64616e+08
-    };
-    double ndon_border_sigma[n] = {
-        1.11698e+09, 1.83940e+09, 2.01939e+09, 1.58712e+09,
-        1.68886e+09, 1.32846e+09, 2.23421e+09, 1.97902e+09, 2.21336e+09
-    };
-    // double ndon_inner[n] = {
-    //     117585e6, 132229e6, 128448e6, 116860e6, 152679e6,
-    //     155203e6, 151460e6, 156954e6, 122504e6
-    // };
-    double ndon_inner[n] = {
-        1.16177e+11, 1.24833e+11, 1.23430e+11, 1.15856e+11, 1.17994e+11,
-        1.20852e+11, 1.19276e+11, 1.17619e+11, 1.19376e+11
-    };
-    double ndon_inner_std[n] = {
-        1.65130e+08, 6.00411e+08, 3.49825e+08, 8.98481e+07,
-        1.36326e+08, 1.18543e+08, 1.34866e+08, 1.22382e+08, 1.37143e+08
-    };
-    double ndon_inner_sigma[n] = {
-        1.77822e+09, 1.51702e+09,  1.82049e+09, 1.17523e+09,
-        1.53691e+09, 1.39873e+09, 1.72993e+09, 1.25877e+09, 1.41285e+09
-    };
-
-    // 5) "TWO ZOOMS": I (nA) second measurement (zoomed)
-    double I_border_zoom[n] = {1.00802e-01, 1.19649e-01, 1.34433e-01, 9.61273e-02, 1.29500e-01, 
-        1.12517e-01, 1.32401e-01, 1.14193e-01, 1.04858e-01};
-    double I_border_zoom_std[n] = {
-        7.55317e-04, 1.67592e-03, 1.92005e-03, 7.66167e-04,
-        8.90387e-04, 2.07455e-03, 1.39123e-03, 1.11859e-03, 1.22975e-03
-    };
-    double I_border_zoom_sigma[n] = {
-        4.10529e-03, 8.23437e-03, 9.52896e-03, 4.44298e-03,
-        5.24834e-03, 4.62978e-03, 6.22953e-03, 7.28483e-03, 6.05784e-03
-    };
-    ///////////////////////////////////////
-    double I_inner_zoom[n] = {2.27959e-02, 2.69181e-02, 3.61673e-02, 2.33366e-02, 2.42778e-02, 2.59393e-02, 
-        3.36645e-02, 2.96695e-02, 2.82294e-02};
-    double I_inner_zoom_std[n] = {
-        1.40903e-03, 1.67823e-04, 3.52464e-04, 2.08458e-04,
-        3.25275e-03, 1.26140e-03, 2.69834e-04, 3.47056e-04, 2.54205e-04
-    };
-    double I_inner_zoom_sigma[n] = {
-        6.33633e-03, 1.95250e-03, 3.66714e-03, 2.34243e-03,
-        4.53124e-03, 2.06813e-03, 2.99997e-03, 3.25653e-03, 2.46318e-03
-    };
-
-    // Lambda for mean
-    auto mean = [](const double* arr, int length) {
-        double sum = 0;
-        for (int i = 0; i < length; i++) sum += arr[i];
-        return sum / length;
-    };
-
-    // Helper: calculate mean over a subset of indices
-    auto mean_subset = [&](const double* arr, const std::vector<int>& indices) {
-        double sum = 0;
-        for (auto idx : indices) sum += arr[idx];
-        return sum / indices.size();
-    };
-
-    // Create canvases
-    TCanvas *c1 = new TCanvas("c1", "I (nA) one zoom", 700, 500);
-    TCanvas *c2 = new TCanvas("c2", "I (nA) two zoom", 700, 500);
-    TCanvas *c3 = new TCanvas("c3", "Vdep", 700, 500);
-    TCanvas *c4 = new TCanvas("c4", "C_fd (pF)", 700, 500);
-    TCanvas *c5 = new TCanvas("c5", "ndon (ne/cm^3)", 700, 500);
-
-    // 1. I one zoom
-    c1->cd();
-    TGraphErrors *gI_border = new TGraphErrors(n, x, I_border, 0, I_border_std);
-    TGraphErrors *gI_inner  = new TGraphErrors(n, x, I_inner, 0, I_inner_std);
-    gI_border->SetMarkerColor(kBlue);     gI_border->SetLineColor(kBlue); gI_border->SetMarkerStyle(20);
-    gI_inner->SetMarkerColor(kRed);       gI_inner->SetLineColor(kRed);   gI_inner->SetMarkerStyle(21);
-    gI_border->SetTitle("Mean current at 120 V (one zoom);Sensor ID;Mean current [nA]");
-
-    // Adjust y-axis range to include all points + margin
-    double I_min = std::min(*std::min_element(I_border, I_border + n), *std::min_element(I_inner, I_inner + n));
-    double I_max = std::max(*std::max_element(I_border, I_border + n), *std::max_element(I_inner, I_inner + n));
-    gI_border->GetYaxis()->SetRangeUser(I_min * 0.9, I_max * 1.1);
-
-    gI_border->Draw("AP");
-    gI_inner->Draw("P SAME");
-    double m1b = mean(I_border, n), m1i = mean(I_inner, n);
-
-    // --- compute error of the mean for border
-    double sumsq_b = 0;
-    for (int i = 0; i < n; i++) sumsq_b += (I_border[i] - m1b) * (I_border[i] - m1b);
-    double sigma_b = sqrt(sumsq_b / (n - 1));   // standard deviation
-    double err_b = sigma_b / sqrt(n);           // error of the mean
-
-    // --- compute error of the mean for inner
-    double sumsq_i = 0;
-    for (int i = 0; i < n; i++) sumsq_i += (I_inner[i] - m1i) * (I_inner[i] - m1i);
-    double sigma_i = sqrt(sumsq_i / (n - 1));
-    double err_i = sigma_i / sqrt(n);
-
-    TLine *l1b = new TLine(x[0], m1b, x[n - 1], m1b);
-    l1b->SetLineColor(kBlue);
-    l1b->SetLineStyle(2);
-    l1b->Draw();
-
-    TLine *l1i = new TLine(x[0], m1i, x[n - 1], m1i);
-    l1i->SetLineColor(kRed);
-    l1i->SetLineStyle(2);
-    l1i->Draw();
-
-    // --- draw error band for border mean
-    TBox *errBoxB = new TBox(x[0], m1b - err_b, x[n - 1], m1b + err_b);
-    errBoxB->SetFillColorAlpha(kBlue, 0.2); // semi-transparent blue
-    errBoxB->SetLineColor(kBlue);
-    errBoxB->Draw();
-
-    // --- draw error band for inner mean
-    TBox *errBoxI = new TBox(x[0], m1i - err_i, x[n - 1], m1i + err_i);
-    errBoxI->SetFillColorAlpha(kRed, 0.2); // semi-transparent red
-    errBoxI->SetLineColor(kRed);
-    errBoxI->Draw();
-
-    // --- legend
-    auto leg1 = new TLegend(0.15, 0.72, 0.45, 0.9);
-    leg1->AddEntry(gI_border, "border", "lep");
-    leg1->AddEntry(gI_inner, "inner", "lep");
-    leg1->AddEntry(l1b, Form("all sensors mean (border) = %.2f", m1b), "l");
-    leg1->AddEntry(errBoxB, Form("error of mean (border) = %.2f", err_b), "f");
-    leg1->AddEntry(l1i, Form("all sensors mean (inner) = %.2f", m1i), "l");
-    leg1->AddEntry(errBoxI, Form("error of mean (inner) = %.2f", err_i), "f");
-    leg1->Draw();
-
-    // // 2. I two zooms
-    // c2->cd();
-    // TGraphErrors *gI_borderz = new TGraphErrors(n, x, I_border_zoom, 0, I_border_zoom_sigma);
-    // TGraphErrors *gI_innerz  = new TGraphErrors(n, x, I_inner_zoom, 0, I_inner_zoom_sigma);
-    // gI_borderz->SetMarkerColor(kBlue + 2);
-    // gI_borderz->SetLineColor(kBlue + 2);
-    // gI_borderz->SetMarkerStyle(22);
-    // gI_innerz->SetMarkerColor(kOrange + 7);
-    // gI_innerz->SetLineColor(kOrange + 7);
-    // gI_innerz->SetMarkerStyle(23);
-    // gI_borderz->SetTitle("Mean current at 120 V;Sensor ID;Mean current [nA]");
-
-    // double I2_min = std::min(*std::min_element(I_border_zoom, I_border_zoom + n), *std::min_element(I_inner_zoom, I_inner_zoom + n));
-    // double I2_max = std::max(*std::max_element(I_border_zoom, I_border_zoom + n), *std::max_element(I_inner_zoom, I_inner_zoom + n));
-    // gI_borderz->GetYaxis()->SetRangeUser(I2_min * 0.8, I2_max * 1.2);
-
-    // gI_borderz->Draw("AP");
-    // gI_innerz->Draw("P SAME");
-    // double m2b = mean(I_border_zoom, n), m2i = mean(I_inner_zoom, n);
-    // TLine *l2b = new TLine(x[0], m2b, x[n - 1], m2b);
-    // l2b->SetLineColor(kBlue + 2);
-    // l2b->SetLineStyle(2);
-    // l2b->Draw();
-    // TLine *l2i = new TLine(x[0], m2i, x[n - 1], m2i);
-    // l2i->SetLineColor(kOrange + 7);
-    // l2i->SetLineStyle(2);
-    // l2i->Draw();
-    // auto leg2 = new TLegend(0.15, 0.77, 0.4, 0.9);
-    // leg2->AddEntry(gI_borderz, "border", "lep");
-    // leg2->AddEntry(gI_innerz, "inner", "lep");
-    // leg2->AddEntry(l2b, Form("all sensors mean (border) = %.2f", m2b), "l");
-    // leg2->AddEntry(l2i, Form("all sensors mean (inner) = %.2f", m2i), "l");
-    // leg2->Draw();
-
-    // // 3. Vdep
-    // c3->cd();
-    // TGraphErrors *gVdep = new TGraphErrors(n, x, Vdep, 0, Vdep_sigma);
-    // gVdep->SetMarkerColor(kMagenta + 2);
-    // gVdep->SetLineColor(kMagenta + 2);
-    // gVdep->SetMarkerStyle(21);
-    // gVdep->SetTitle("Mean depletion voltage;Sensor ID;Mean V_{dep} [V]");
-    // // Adjust y-axis range for Vdep
-    // gVdep->GetYaxis()->SetRangeUser(*std::min_element(Vdep, Vdep + n) * 0.9, *std::max_element(Vdep, Vdep + n) * 1.1);
-
-    // gVdep->Draw("AP");
-    // double mVdep = mean(Vdep, n);
-    // TLine *l3v = new TLine(x[0], mVdep, x[n - 1], mVdep);
-    // l3v->SetLineColor(kMagenta + 2);
-    // l3v->SetLineStyle(2);
-    // l3v->Draw();
-    // auto leg3 = new TLegend(0.15, 0.83, 0.35, 0.93);
-    // leg3->AddEntry(gVdep, "mean values", "lep");
-    // leg3->AddEntry(l3v, Form("all sensors mean = %.2f",mVdep), "l");
-    // leg3->Draw();
-
-    // // 4. cs (pF)
-    // c4->cd();
-    // TGraphErrors *gcsb = new TGraphErrors(n, x, cs_border, 0, cs_border_sigma);
-    // TGraphErrors *gcsi = new TGraphErrors(n, x, cs_inner, 0, cs_inner_sigma);
-    // gcsb->SetMarkerColor(kGreen + 2);
-    // gcsb->SetLineColor(kGreen + 2);
-    // gcsb->SetMarkerStyle(22);
-    // gcsi->SetMarkerColor(kRed + 2);
-    // gcsi->SetLineColor(kRed + 2);
-    // gcsi->SetMarkerStyle(23);
-    // gcsb->SetTitle("Mean full depletion capacitance;Sensor ID;C_{fd} [pF]");
-    // // Set y-axis range to include both groups fully
-    // double cs_min = std::min(*std::min_element(cs_border, cs_border + n), *std::min_element(cs_inner, cs_inner + n));
-    // double cs_max = std::max(*std::max_element(cs_border, cs_border + n), *std::max_element(cs_inner, cs_inner + n));
-    // gcsb->GetYaxis()->SetRangeUser(cs_min * 0.9, cs_max * 1.1);
-
-    // gcsb->Draw("AP");
-    // gcsi->Draw("P SAME");
-
-    // double mcsb = mean(cs_border, n), mcsi = mean(cs_inner, n);
-
-    // // For cs capacitance draw two means: channels (0,1,2,3,8) and (4,5,6,7) zero-based indices
-    // std::vector<int> groupA = {0, 1, 2, 3, 8}; // channels 9,10,13,14,20
-    // std::vector<int> groupB = {4, 5, 6, 7};    // channels 15,16,17,18
-
-    // double mcsbA = mean_subset(cs_border, groupA);
-    // double mcsbB = mean_subset(cs_border, groupB);
-    // double mcsiA = mean_subset(cs_inner, groupA);
-    // double mcsiB = mean_subset(cs_inner, groupB);
-
-    // TLine *l4bA = new TLine(x[0], mcsb, x[n - 1], mcsb);
-    // l4bA->SetLineColor(kGreen + 2);
-    // l4bA->SetLineStyle(2);
-    // l4bA->Draw();
-    // // TLine *l4bB = new TLine(x[0], mcsbB, x[n - 1], mcsbB);
-    // // l4bB->SetLineColor(kGreen + 2);
-    // // l4bB->SetLineStyle(3);
-    // // l4bB->Draw();
-
-    // TLine *l4iA = new TLine(x[0], mcsi, x[n - 1], mcsi);
-    // l4iA->SetLineColor(kRed + 2);
-    // l4iA->SetLineStyle(2);
-    // l4iA->Draw();
-    // // TLine *l4iB = new TLine(x[0], mcsiB, x[n - 1], mcsiB);
-    // // l4iB->SetLineColor(kRed + 2);
-    // // l4iB->SetLineStyle(3);
-    // // l4iB->Draw();
-
-    // auto leg4 = new TLegend(0.15, 0.77, 0.48, 0.9);
-    // leg4->AddEntry(gcsb, "border", "lep");
-    // leg4->AddEntry(gcsi, "inner", "lep");
-    // leg4->AddEntry(l4bA, Form("all sensors mean (border) = %.2f",mcsb), "l");
-    // // leg4->AddEntry(l4bB, Form("sensors 15,16,17,18 mean (border) = %.2f",mcsbB), "l");
-    // // leg4->AddEntry(l4iB, Form("sensors 9,10,13,14,20 mean (inner) = %.2f",mcsiA), "l");
-    // leg4->AddEntry(l4iA, Form("all sensors mean (inner) = %.2f",mcsi), "l");
-    // leg4->Draw();
-
-    // // 5. ndon (ne/cm^3)
-    // c5->cd();
-    // TGraphErrors *gndb = new TGraphErrors(n, x, ndon_border, 0, ndon_border_sigma);
-    // TGraphErrors *gndi = new TGraphErrors(n, x, ndon_inner, 0, ndon_inner_sigma);
-    // gndb->SetMarkerColor(kBlack);
-    // gndb->SetLineColor(kBlack);
-    // gndb->SetMarkerStyle(29);
-    // gndi->SetMarkerColor(kPink + 6);
-    // gndi->SetLineColor(kPink + 6);
-    // gndi->SetMarkerStyle(30);
-    // gndb->SetTitle("Mean donor density;Sensor ID;Mean n_{don} [ne/cm^{3}]");
-
-    // // Adjust y-axis range for donor density (include all points)
-    // double nd_min = std::min(*std::min_element(ndon_border, ndon_border + n), *std::min_element(ndon_inner, ndon_inner + n));
-    // double nd_max = std::max(*std::max_element(ndon_border, ndon_border + n), *std::max_element(ndon_inner, ndon_inner + n));
-    // gndb->GetYaxis()->SetRangeUser(nd_min * 0.9, nd_max * 1.1);
-
-    // gndb->Draw("AP");
-    // gndi->Draw("P SAME");
-
-    // double mndb = mean(ndon_border, n), mndi = mean(ndon_inner, n);
-
-    // // Two groups mean lines: channels {9,10,13,14,20} and {15,16,17,18}
-    // double mndbA = mean_subset(ndon_border, groupA);
-    // double mndbB = mean_subset(ndon_border, groupB);
-    // double mndiA = mean_subset(ndon_inner, groupA);
-    // double mndiB = mean_subset(ndon_inner, groupB);
-
-    // TLine *l5bA = new TLine(x[0], mndb, x[n - 1], mndb);
-    // l5bA->SetLineColor(kBlack);
-    // l5bA->SetLineStyle(2);
-    // l5bA->Draw();
-    // // TLine *l5bB = new TLine(x[0], mndbB, x[n - 1], mndbB);
-    // // l5bB->SetLineColor(kBlack);
-    // // l5bB->SetLineStyle(3);
-    // // l5bB->Draw();
-
-    // // TLine *l5iA = new TLine(x[0], mndiA, x[n - 1], mndiA);
-    // // l5iA->SetLineColor(kPink + 6);
-    // // l5iA->SetLineStyle(2);
-    // // l5iA->Draw();
-    // TLine *l5iB = new TLine(x[0], mndi, x[n - 1], mndi);
-    // l5iB->SetLineColor(kPink + 6);
-    // l5iB->SetLineStyle(3);
-    // l5iB->Draw();
-
-    // auto leg5 = new TLegend(0.55, 0.77, 0.9, 0.9);
-    // leg5->AddEntry(gndb, "border", "lep");
-    // leg5->AddEntry(gndi, "inner", "lep");
-
-    // leg5->AddEntry(l5bA, Form("all sensors mean (border) = %.2e",mndb), "l");
-    // // leg5->AddEntry(l5bB, Form("sensors 15,16,17,18 mean (border) = %.2e",mndbB), "l");
-    // // leg5->AddEntry(l5iA, Form("sensors 9,10,13,14,20 mean (inner) = %.2e",mndiA), "l");
-    // leg5->AddEntry(l5iB, Form("all sensors mean (inner) = %.2e",mndi), "l");
-    // leg5->Draw();
-
-    // TFile* f = new TFile("all_sensors_results.root", "RECREATE");
-    // c1->Write();
-    // c2->Write();
-    // c3->Write();
-    // c4->Write();
-    // c5->Write();
-    // f->Close();
-
-        // 2. I two zooms
-    c2->cd();
-    TGraphErrors *gI_borderz = new TGraphErrors(n, x, I_border_zoom, 0, I_border_zoom_sigma);
-    TGraphErrors *gI_innerz  = new TGraphErrors(n, x, I_inner_zoom, 0, I_inner_zoom_sigma);
-    gI_borderz->SetMarkerColor(kBlue + 2);
-    gI_borderz->SetLineColor(kBlue + 2);
-    gI_borderz->SetMarkerStyle(22);
-    gI_innerz->SetMarkerColor(kOrange + 7);
-    gI_innerz->SetLineColor(kOrange + 7);
-    gI_innerz->SetMarkerStyle(23);
-    gI_borderz->SetTitle("Mean current at 120 V;Sensor ID;Mean current [nA]");
-
-    double I2_min = std::min(*std::min_element(I_border_zoom, I_border_zoom + n), *std::min_element(I_inner_zoom, I_inner_zoom + n));
-    double I2_max = std::max(*std::max_element(I_border_zoom, I_border_zoom + n), *std::max_element(I_inner_zoom, I_inner_zoom + n));
-    gI_borderz->GetYaxis()->SetRangeUser(I2_min * 0.8, I2_max * 1.2);
-
-    gI_borderz->Draw("AP");
-    gI_innerz->Draw("P SAME");
-
-    // mean + error for border zoom
-    double m2b = mean(I_border_zoom, n), m2i = mean(I_inner_zoom, n);
-    double sumsq2b=0, sumsq2i=0;
-    for (int i=0;i<n;i++) {
-        sumsq2b += (I_border_zoom[i]-m2b)*(I_border_zoom[i]-m2b);
-        sumsq2i += (I_inner_zoom[i]-m2i)*(I_inner_zoom[i]-m2i);
+double mean(const std::vector<double> &values) {
+    double sum = 0.0;
+    for (const double value : values) {
+        sum += value;
     }
-    double err2b = sqrt(sumsq2b/(n-1))/sqrt(n);
-    double err2i = sqrt(sumsq2i/(n-1))/sqrt(n);
+    return sum / static_cast<double>(values.size());
+}
 
-    TLine *l2b = new TLine(x[0], m2b, x[n - 1], m2b);
-    l2b->SetLineColor(kBlue + 2);
-    l2b->SetLineStyle(2);
-    l2b->Draw();
-    TBox *errBox2b = new TBox(x[0], m2b-err2b, x[n-1], m2b+err2b);
-    errBox2b->SetFillColorAlpha(kBlue+2,0.2);
-    errBox2b->SetLineColor(kBlue+2);
-    errBox2b->Draw();
+double standard_error_of_mean(const std::vector<double> &values) {
+    const double average = mean(values);
+    double sum_of_squares = 0.0;
+    for (const double value : values) {
+        const double difference = value - average;
+        sum_of_squares += difference * difference;
+    }
+    const double standard_deviation =
+        std::sqrt(sum_of_squares / static_cast<double>(values.size() - 1));
+    return standard_deviation / std::sqrt(static_cast<double>(values.size()));
+}
 
-    TLine *l2i = new TLine(x[0], m2i, x[n - 1], m2i);
-    l2i->SetLineColor(kOrange + 7);
-    l2i->SetLineStyle(2);
-    l2i->Draw();
-    TBox *errBox2i = new TBox(x[0], m2i-err2i, x[n-1], m2i+err2i);
-    errBox2i->SetFillColorAlpha(kOrange+7,0.2);
-    errBox2i->SetLineColor(kOrange+7);
-    errBox2i->Draw();
+double minimum(const std::vector<double> &values) {
+    return *std::min_element(values.begin(), values.end());
+}
 
-    auto leg2 = new TLegend(0.15, 0.72, 0.45, 0.9);
-    leg2->AddEntry(gI_borderz, "border", "lep");
-    leg2->AddEntry(gI_innerz, "inner", "lep");
-    leg2->AddEntry(l2b, Form("all sensors mean (border) = %.3f", m2b), "l");
-    leg2->AddEntry(errBox2b, Form("error of mean (border) = %.3f", err2b), "f");
-    leg2->AddEntry(l2i, Form("all sensors mean (inner) = %.3f", m2i), "l");
-    leg2->AddEntry(errBox2i, Form("error of mean (inner) = %.3f", err2i), "f");
-    leg2->Draw();
+double maximum(const std::vector<double> &values) {
+    return *std::max_element(values.begin(), values.end());
+}
 
-    // 3. Vdep
-    c3->cd();
-    TGraphErrors *gVdep = new TGraphErrors(n, x, Vdep, 0, Vdep_sigma);
-    gVdep->SetMarkerColor(kMagenta + 2);
-    gVdep->SetLineColor(kMagenta + 2);
-    gVdep->SetMarkerStyle(21);
-    gVdep->SetTitle("Mean depletion voltage;Sensor ID;Mean V_{dep} [V]");
-    gVdep->GetYaxis()->SetRangeUser(*std::min_element(Vdep, Vdep + n) * 0.9, *std::max_element(Vdep, Vdep + n) * 1.1);
-    gVdep->Draw("AP");
+double minimum(const std::vector<double> &first, const std::vector<double> &second) {
+    return std::min(minimum(first), minimum(second));
+}
 
-    double mVdep = mean(Vdep, n);
-    double sumsqV=0; for(int i=0;i<n;i++) sumsqV+=(Vdep[i]-mVdep)*(Vdep[i]-mVdep);
-    double errVdep = sqrt(sumsqV/(n-1))/sqrt(n);
+double maximum(const std::vector<double> &first, const std::vector<double> &second) {
+    return std::max(maximum(first), maximum(second));
+}
 
-    TLine *l3v = new TLine(x[0], mVdep, x[n - 1], mVdep);
-    l3v->SetLineColor(kMagenta + 2);
-    l3v->SetLineStyle(2);
-    l3v->Draw();
-    TBox *errBox3v = new TBox(x[0], mVdep-errVdep, x[n-1], mVdep+errVdep);
-    errBox3v->SetFillColorAlpha(kMagenta+2,0.2);
-    errBox3v->SetLineColor(kMagenta+2);
-    errBox3v->Draw();
+std::string value_label(const std::string &text, const std::string &series_label,
+                        const std::string &number_format, double value, bool include_series) {
+    const std::string prefix = include_series ? text + " (" + series_label + ") = " : text + " = ";
+    return Form((prefix + number_format).c_str(), value);
+}
 
-    auto leg3 = new TLegend(0.15, 0.77, 0.45, 0.9);
-    leg3->AddEntry(gVdep, "mean values", "lep");
-    leg3->AddEntry(l3v, Form("all sensors mean = %.2f",mVdep), "l");
-    leg3->AddEntry(errBox3v, Form("error of mean = %.2f",errVdep), "f");
-    leg3->Draw();
+void add_mean_band(TLegend &legend, const std::vector<double> &x, double average, double error,
+                   Color_t color, int line_style, double fill_alpha, const std::string &mean_label,
+                   const std::string &error_label) {
+    auto *mean_line = new TLine(x.front(), average, x.back(), average);
+    mean_line->SetLineColor(color);
+    mean_line->SetLineStyle(line_style);
+    mean_line->Draw("SAME");
 
-    // 4. cs (pF)
-    c4->cd();
-    TGraphErrors *gcsb = new TGraphErrors(n, x, cs_border, 0, cs_border_sigma);
-    TGraphErrors *gcsi = new TGraphErrors(n, x, cs_inner, 0, cs_inner_sigma);
-    gcsb->SetMarkerColor(kGreen + 2);
-    gcsb->SetLineColor(kGreen + 2);
-    gcsb->SetMarkerStyle(22);
-    gcsi->SetMarkerColor(kRed + 2);
-    gcsi->SetLineColor(kRed + 2);
-    gcsi->SetMarkerStyle(23);
-    gcsb->SetTitle("Mean full depletion capacitance;Sensor ID;C_{fd} [pF]");
-    double cs_min = std::min(*std::min_element(cs_border, cs_border + n), *std::min_element(cs_inner, cs_inner + n));
-    double cs_max = std::max(*std::max_element(cs_border, cs_border + n), *std::max_element(cs_inner, cs_inner + n));
-    gcsb->GetYaxis()->SetRangeUser(cs_min * 0.9, cs_max * 1.1);
-    gcsb->Draw("AP");
-    gcsi->Draw("P SAME");
+    auto *error_box = new TBox(x.front(), average - error, x.back(), average + error);
+    error_box->SetFillColorAlpha(color, fill_alpha);
+    error_box->SetLineColor(color);
+    error_box->Draw("SAME");
 
-    double mcsb = mean(cs_border, n), mcsi = mean(cs_inner, n);
-    double sumsqcsb=0,sumsqcsi=0;
-    for(int i=0;i<n;i++){sumsqcsb+=(cs_border[i]-mcsb)*(cs_border[i]-mcsb); sumsqcsi+=(cs_inner[i]-mcsi)*(cs_inner[i]-mcsi);}
-    double errcsb = sqrt(sumsqcsb/(n-1))/sqrt(n);
-    double errcsi = sqrt(sumsqcsi/(n-1))/sqrt(n);
+    legend.AddEntry(mean_line, mean_label.c_str(), "l");
+    legend.AddEntry(error_box, error_label.c_str(), "f");
+}
 
-    TLine *l4bA = new TLine(x[0], mcsb, x[n - 1], mcsb);
-    l4bA->SetLineColor(kGreen + 2);
-    l4bA->SetLineStyle(2);
-    l4bA->Draw();
-    TBox *errBox4b = new TBox(x[0], mcsb-errcsb, x[n-1], mcsb+errcsb);
-    errBox4b->SetFillColorAlpha(kGreen+2,0.2);
-    errBox4b->SetLineColor(kGreen+2);
-    errBox4b->Draw("same");
+TCanvas *draw_series_plot(const std::string &canvas_name, const std::string &canvas_title,
+                          const std::string &graph_title, const std::vector<double> &x,
+                          const std::vector<Series> &series, double y_min, double y_max,
+                          double legend_x1, double legend_y1, double legend_x2, double legend_y2,
+                          const std::string &number_format) {
+    auto *canvas = new TCanvas(canvas_name.c_str(), canvas_title.c_str(), 700, 500);
+    canvas->cd();
 
-    TLine *l4iA = new TLine(x[0], mcsi, x[n - 1], mcsi);
-    l4iA->SetLineColor(kRed + 2);
-    l4iA->SetLineStyle(2);
-    l4iA->Draw();
-    TBox *errBox4i = new TBox(x[0], mcsi-errcsi, x[n-1], mcsi+errcsi);
-    errBox4i->SetFillColorAlpha(kRed+2,0.2);
-    errBox4i->SetLineColor(kRed+2);
-    errBox4i->Draw("same");
+    std::vector<TGraphErrors *> graphs;
+    graphs.reserve(series.size());
 
-    auto leg4 = new TLegend(0.15, 0.72, 0.48, 0.9);
-    leg4->AddEntry(gcsb, "border", "lep");
-    leg4->AddEntry(gcsi, "inner", "lep");
-    leg4->AddEntry(l4bA, Form("all sensors mean (border) = %.3f",mcsb), "l");
-    leg4->AddEntry(errBox4b, Form("error of mean (border) = %.3f",errcsb), "f");
-    leg4->AddEntry(l4iA, Form("all sensors mean (inner) = %.3f",mcsi), "l");
-    leg4->AddEntry(errBox4i, Form("error of mean (inner) = %.3f",errcsi), "f");
-    leg4->Draw();
+    for (const Series &item : series) {
+        auto *graph = new TGraphErrors(static_cast<int>(x.size()), x.data(), item.values.data(),
+                                       nullptr, item.errors.data());
+        graph->SetTitle(graph_title.c_str());
+        graph->SetMarkerColor(item.color);
+        graph->SetLineColor(item.color);
+        graph->SetMarkerStyle(item.marker);
+        graphs.push_back(graph);
+    }
 
-    // 5. ndon (ne/cm^3)
-    c5->cd();
-    TGraphErrors *gndb = new TGraphErrors(n, x, ndon_border, 0, ndon_border_sigma);
-    TGraphErrors *gndi = new TGraphErrors(n, x, ndon_inner, 0, ndon_inner_sigma);
-    gndb->SetMarkerColor(kBlack);
-    gndb->SetLineColor(kBlack);
-    gndb->SetMarkerStyle(29);
-    gndi->SetMarkerColor(kPink + 6);
-    gndi->SetLineColor(kPink + 6);
-    gndi->SetMarkerStyle(30);
-    gndb->SetTitle("Mean donor density;Sensor ID;Mean n_{don} [ne/cm^{3}]");
+    graphs.front()->GetYaxis()->SetRangeUser(y_min, y_max);
+    graphs.front()->Draw("AP");
+    for (std::size_t i = 1; i < graphs.size(); ++i) {
+        graphs[i]->Draw("P SAME");
+    }
 
-    double nd_min = std::min(*std::min_element(ndon_border, ndon_border + n), *std::min_element(ndon_inner, ndon_inner + n));
-    double nd_max = std::max(*std::max_element(ndon_border, ndon_border + n), *std::max_element(ndon_inner, ndon_inner + n));
-    gndb->GetYaxis()->SetRangeUser(nd_min * 0.9, nd_max * 1.1);
+    auto *legend = new TLegend(legend_x1, legend_y1, legend_x2, legend_y2);
+    for (std::size_t i = 0; i < series.size(); ++i) {
+        legend->AddEntry(graphs[i], series[i].label.c_str(), "lep");
+    }
 
-    gndb->Draw("AP");
-    gndi->Draw("P SAME");
+    const bool include_series = series.size() > 1;
+    for (const Series &item : series) {
+        const double average = mean(item.values);
+        const double error = standard_error_of_mean(item.values);
+        add_mean_band(
+            *legend, x, average, error, item.color, 2, 0.2,
+            value_label("all sensors mean", item.label, number_format, average, include_series),
+            value_label("error of mean", item.label, number_format, error, include_series));
+    }
+    legend->Draw("SAME");
+    return canvas;
+}
 
-    double mndb = mean(ndon_border, n), mndi = mean(ndon_inner, n);
-    double sumsqndb=0,sumsqndi=0;
-    for(int i=0;i<n;i++){sumsqndb+=(ndon_border[i]-mndb)*(ndon_border[i]-mndb); sumsqndi+=(ndon_inner[i]-mndi)*(ndon_inner[i]-mndi);}
-    double errndb = sqrt(sumsqndb/(n-1))/sqrt(n);
-    double errndi = sqrt(sumsqndi/(n-1))/sqrt(n);
+} // namespace
 
-    TLine *l5bA = new TLine(x[0], mndb, x[n - 1], mndb);
-    l5bA->SetLineColor(kBlack);
-    l5bA->SetLineStyle(2);
-    l5bA->Draw();
-    TBox *errBox5b = new TBox(x[0], mndb-errndb, x[n-1], mndb+errndb);
-    errBox5b->SetFillColorAlpha(kBlack,0.2);
-    errBox5b->SetLineColor(kBlack);
-    errBox5b->Draw("same");
+void plot_means_groups() {
+    const std::vector<double> x = {9, 10, 13, 14, 15, 16, 17, 18, 20};
 
-    TLine *l5iB = new TLine(x[0], mndi, x[n - 1], mndi);
-    l5iB->SetLineColor(kPink + 6);
-    l5iB->SetLineStyle(2);
-    l5iB->Draw();
-    TBox *errBox5i = new TBox(x[0], mndi-errndi, x[n-1], mndi+errndi);
-    errBox5i->SetFillColorAlpha(kPink+6,0.2);
-    errBox5i->SetLineColor(kPink+6);
-    errBox5i->Draw("same");
+    const Series I_border{
+        "border",
+        {0.102106, 0.124096, 0.141025, 0.0996983, 0.133513, 0.130092, 0.236907, 0.116035, 0.114175},
+        {0.00136566, 0.00207136, 0.003234042, 0.001537522, 0.002476146, 0.003149085, 0.083538352,
+         0.001503999, 0.003237171},
+        kBlue,
+        20};
 
-    auto leg5 = new TLegend(0.55, 0.72, 0.9, 0.9);
-    leg5->AddEntry(gndb, "border", "lep");
-    leg5->AddEntry(gndi, "inner", "lep");
-    leg5->AddEntry(l5bA, Form("all sensors mean (border) = %.2e",mndb), "l");
-    leg5->AddEntry(errBox5b, Form("error of mean (border) = %.2e",errndb), "f");
-    leg5->AddEntry(l5iB, Form("all sensors mean (inner) = %.2e",mndi), "l");
-    leg5->AddEntry(errBox5i, Form("error of mean (inner) = %.2e",errndi), "f");
-    leg5->Draw();
+    const Series I_inner{"inner",
+                         {0.0277687, 0.0323819, 0.0422819, 0.0261969, 0.02996, 0.0325467, 0.0487106,
+                          0.0498156, 0.0385838},
+                         {0.00066764, 0.00116804, 0.00121416, 0.0005778, 0.0006884, 0.00111217,
+                          0.00298892, 0.00326956, 0.00165396},
+                         kRed,
+                         21};
 
-    TFile* f = new TFile("all_sensors_results.root", "RECREATE");
+    const Series Vdep{
+        "mean values",
+        {39.2443, 42.1407, 41.5955, 39.5250, 39.2711, 40.1523, 39.2806, 39.9765, 39.9105},
+        {0.518085, 0.593510, 0.350522, 0.398827, 0.590837, 0.613164, 0.511247, 0.363510, 0.557616},
+        kMagenta + 2,
+        21};
+
+    const Series cs_border{
+        "border",
+        {4.92100, 4.93655, 4.93350, 4.94820, 4.96133, 4.98191, 4.98339, 4.96732, 4.96264},
+        {0.00595503, 0.00768074, 0.00693998, 0.0141305, 0.00911386, 0.0102376, 0.0171502, 0.0132169,
+         0.0169416},
+        kGreen + 2,
+        22};
+
+    const Series cs_inner{
+        "inner",
+        {4.73487, 4.74862, 4.74626, 4.75559, 4.77339, 4.79067, 4.79506, 4.77681, 4.76937},
+        {0.00579868, 0.00832303, 0.00672275, 0.00895443, 0.00985736, 0.00844902, 0.0112740,
+         0.0105223, 0.0125169},
+        kRed + 2,
+        23};
+
+    const Series ndon_border{"border",
+                             {1.27814e11, 1.35721e11, 1.34992e11, 1.29874e11, 1.29836e11,
+                              1.33602e11, 1.30404e11, 1.31473e11, 1.31337e11},
+                             {1.11698e9, 1.83940e9, 2.01939e9, 1.58712e9, 1.68886e9, 1.32846e9,
+                              2.23421e9, 1.97902e9, 2.21336e9},
+                             kBlack,
+                             29};
+
+    const Series ndon_inner{"inner",
+                            {1.16177e11, 1.24833e11, 1.23430e11, 1.15856e11, 1.17994e11, 1.20852e11,
+                             1.19276e11, 1.17619e11, 1.19376e11},
+                            {1.77822e9, 1.51702e9, 1.82049e9, 1.17523e9, 1.53691e9, 1.39873e9,
+                             1.72993e9, 1.25877e9, 1.41285e9},
+                            kPink + 6,
+                            30};
+
+    const Series I_border_zoom{"border",
+                               {1.00802e-1, 1.19649e-1, 1.34433e-1, 9.61273e-2, 1.29500e-1,
+                                1.12517e-1, 1.32401e-1, 1.14193e-1, 1.04858e-1},
+                               {4.10529e-3, 8.23437e-3, 9.52896e-3, 4.44298e-3, 5.24834e-3,
+                                4.62978e-3, 6.22953e-3, 7.28483e-3, 6.05784e-3},
+                               kBlue + 2,
+                               22};
+
+    const Series I_inner_zoom{"inner",
+                              {2.27959e-2, 2.69181e-2, 3.61673e-2, 2.33366e-2, 2.42778e-2,
+                               2.59393e-2, 3.36645e-2, 2.96695e-2, 2.82294e-2},
+                              {6.33633e-3, 1.95250e-3, 3.66714e-3, 2.34243e-3, 4.53124e-3,
+                               2.06813e-3, 2.99997e-3, 3.25653e-3, 2.46318e-3},
+                              kOrange + 7,
+                              23};
+
+    TCanvas *c1 = draw_series_plot(
+        "c1", "I (nA) one zoom", "Mean current at 120 V (one zoom);Sensor ID;Mean current [nA]", x,
+        {I_border, I_inner}, minimum(I_border.values, I_inner.values) * 0.9,
+        maximum(I_border.values, I_inner.values) * 1.1, 0.15, 0.72, 0.45, 0.9, "%.2f");
+
+    TCanvas *c2 = draw_series_plot(
+        "c2", "I (nA) two zoom", "Mean current at 120 V;Sensor ID;Mean current [nA]", x,
+        {I_border_zoom, I_inner_zoom}, minimum(I_border_zoom.values, I_inner_zoom.values) * 0.8,
+        maximum(I_border_zoom.values, I_inner_zoom.values) * 1.2, 0.15, 0.72, 0.45, 0.9, "%.3f");
+
+    TCanvas *c3 = draw_series_plot(
+        "c3", "Vdep", "Mean depletion voltage;Sensor ID;Mean V_{dep} [V]", x, {Vdep},
+        minimum(Vdep.values) * 0.9, maximum(Vdep.values) * 1.1, 0.15, 0.77, 0.45, 0.9, "%.2f");
+
+    TCanvas *c4 = draw_series_plot(
+        "c4", "C_fd (pF)", "Mean full depletion capacitance;Sensor ID;C_{fd} [pF]", x,
+        {cs_border, cs_inner}, minimum(cs_border.values, cs_inner.values) * 0.9,
+        maximum(cs_border.values, cs_inner.values) * 1.1, 0.15, 0.72, 0.48, 0.9, "%.3f");
+
+    TCanvas *c5 = draw_series_plot(
+        "c5", "ndon (ne/cm^3)", "Mean donor density;Sensor ID;Mean n_{don} [ne/cm^{3}]", x,
+        {ndon_border, ndon_inner}, minimum(ndon_border.values, ndon_inner.values) * 0.9,
+        maximum(ndon_border.values, ndon_inner.values) * 1.1, 0.55, 0.72, 0.9, 0.9, "%.2e");
+
+    auto *results_file = new TFile("all_sensors_results.root", "RECREATE");
     c1->Write();
     c2->Write();
     c3->Write();
     c4->Write();
     c5->Write();
-    f->Close();
-
-
+    results_file->Close();
 }
